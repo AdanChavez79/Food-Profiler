@@ -1,7 +1,8 @@
 import json
+from time import time
 import numpy as np
 import pandas as pd
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from collections import defaultdict
 from fastapi import FastAPI
 import asyncpg
@@ -237,3 +238,56 @@ async def populate_database():
     except Exception as e:
         return {"error": str(e)}
     
+
+"""
+def reccomend_food(profile: List[Tuple[str, int]], inv: dict, database_list: np.ndarray, matches_ingredients: List[List[Tuple[str, int]]]) -> Tuple[List[int], np.ndarray, List[List[str]]]:
+    meals_containing_ingredients = []
+    ingredients = []
+    for ingredient in profile: #ingredient and weight
+        if ingredient[0] in inv: #check if ingredient is in the reverse index, might need to create api call
+            #print("Ingredient: " + ingredient[0] + " -> " + str(inv[ingredient[0]][0:10]))
+            meals_containing_ingredients.append(set(inv[ingredient[0]])) #get list of meals that have ingedient from inverted index, might thave to create api call (in this situation a list is needed)
+            ingredients.append(ingredient) # add ingredient and weight to list
+
+    #print("ingredients: " + str(ingredients))
+
+    for i, meals in enumerate(meals_containing_ingredients): #set meals
+        for meal in meals: #meal
+            if (meal >= 0 and meal < len(database_list)):
+                database_list[meal] += ingredients[i][1]  # Add the weight of the ingredient
+                matches_ingredients[meal].append(ingredients[i]) #add ingredient and weight to list of matches for meal
+
+    
+    sorted_meals = (np.argsort(database_list)[::-1])  # Sort by index in descending order
+
+    sorted_meals = sorted_meals[:database_list.argmax(0)]  # Trim to only include meals that have at least one match
+
+    return sorted_meals.tolist(), matches_ingredients
+
+def print_meals_from_id(meal_ids: List[int], df: pd.DataFrame, matches_ingredients: List[List[Tuple[str, int]]]) -> None:
+    for i, meal_id in enumerate(meal_ids):
+        print(str(i + 1) + ". " + df.loc[meal_id, 'Name'] + " (" + str(meal_id) + ", matched " + str(len(matches_ingredients[meal_id])) + " ingredients):") #database called to find name of food based on id, might need api call
+        print(df.loc[meal_id, 'tokens']) #will probably need to be removed, and replaced with ingredients column from database, api call might be needed to grab ingredients
+        print("matched ingredients: " + str(sorted(matches_ingredients[meal_id])))
+        print("total weight: " + str(sum(weight for _, weight in matches_ingredients[meal_id])) + "\n\n")
+
+
+
+def run_and_print_reccomendations():
+    start_time = time()
+
+    flavor_profile = [("chicken", 3), ("avocado", 14), ("salmon", 10), ("rice", 5), ("asparagus", 2), ("beef", 20), ("corn", 6), ("broccoli", 7), ("carrots", 1), ("onions", 10), ("carrot", 4), ("thyme", 1)]
+    n = database_pd.shape[0] #databse size needed, might need api call
+    database_list = np.full(n, 0, dtype=int)
+    matches_ingredients = []
+    for i in range(n):
+        matches_ingredients.append([])
+
+
+    recommended_meals, matches_ingredients = reccomend_food(flavor_profile, inv, database_list, matches_ingredients) #if api calls are made we can remove inv from parameter list
+
+    print_meals_from_id(recommended_meals[:10], database_pd, matches_ingredients) #if api calls are made we can remove database_pd from parameter list
+
+    end_time = time()
+    print(f"Execution time: {end_time - start_time} seconds")
+    """
