@@ -17,7 +17,7 @@ import {
   Search,
 } from "lucide-react-native";
 
-type Meal = {
+export type HomeMeal = {
   id: string;
   name: string;
   image: string;
@@ -26,10 +26,13 @@ type Meal = {
   totalTime: number;
   calories: number;
   protein: number;
-  tags: string[];
 };
 
-const featuredMeal: Meal = {
+type HomePageProps = {
+  onOpenMeal?: (meal: HomeMeal) => void;
+};
+
+const featuredMeal: HomeMeal = {
   id: "1",
   name: "One-Pan Chicken & Vegetables",
   image:
@@ -39,7 +42,6 @@ const featuredMeal: Meal = {
   totalTime: 35,
   calories: 420,
   protein: 35,
-  tags: ["healthy", "quick", "one-pan"],
 };
 
 const mealNames = [
@@ -55,11 +57,11 @@ const mealNames = [
   "Spicy Tuna Poke Bowl",
 ];
 
-const HomePage = () => {
+const HomePage = ({ onOpenMeal }: HomePageProps) => {
   const [expanded, setExpanded] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const recommendations = useMemo<Meal[]>(
+  const recommendations = useMemo<HomeMeal[]>(
     () =>
       Array.from({ length: 10 }, (_, i) => {
         if (i === 0) return featuredMeal;
@@ -72,16 +74,12 @@ const HomePage = () => {
           calories: 360 + i * 25,
           protein: 24 + i * 2,
           difficulty: i % 3 === 0 ? "Easy" : i % 3 === 1 ? "Medium" : "Hard",
-          tags:
-            i % 2 === 0
-              ? ["protein", "balanced", "weekday"]
-              : ["quick", "flavorful", "meal-prep"],
         };
       }),
     []
   );
 
-  const MealStats = ({ meal }: { meal: Meal }) => (
+  const MealStats = ({ meal }: { meal: HomeMeal }) => (
     <View className="mt-2 flex-row items-center gap-4">
       <View className="flex-row items-center">
         <Clock size={14} color="#FFFFFF" />
@@ -98,7 +96,7 @@ const HomePage = () => {
     </View>
   );
 
-  const FeaturedCard = ({ meal }: { meal: Meal }) => (
+  const FeaturedCard = ({ meal }: { meal: HomeMeal }) => (
     <Pressable
       onPress={() => setExpanded(true)}
       style={({ pressed }) => [{ transform: [{ scale: pressed ? 0.98 : 1 }] }]}
@@ -117,13 +115,6 @@ const HomePage = () => {
           <View>
             <Text className="text-2xl font-bold text-white">{meal.name}</Text>
             <MealStats meal={meal} />
-            <View className="mt-3 flex-row flex-wrap gap-2">
-              {meal.tags.map((tag) => (
-                <View key={tag} className="rounded-lg bg-white/20 px-2.5 py-1">
-                  <Text className="text-xs capitalize text-white">{tag}</Text>
-                </View>
-              ))}
-            </View>
             <Text className="mt-3 text-xs text-white/80">
               {meal.calories} calories - {meal.protein}g protein
             </Text>
@@ -133,12 +124,12 @@ const HomePage = () => {
     </Pressable>
   );
 
-  const RecommendationCard = ({ meal }: { meal: Meal }) => {
+  const RecommendationCard = ({ meal }: { meal: HomeMeal }) => {
     const isFeatured = meal.id === featuredMeal.id;
 
     return (
       <Pressable
-        onPress={() => {}}
+        onPress={() => onOpenMeal?.(meal)}
         style={({ pressed }) => [
           { transform: [{ scale: pressed ? 0.98 : isFeatured ? 1.01 : 1 }] },
         ]}
