@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert } from 'react-native';
 import HomePage, { HomeMeal } from 'components/HomePage';
 import MealDetailPage from 'components/MealDetailPage';
+import PreferencesPage, { UserPreferences } from 'components/PreferencesPage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './global.css';
@@ -62,6 +63,14 @@ const toDetailMeal = (meal: HomeMeal): MealDetailMeal => {
 
 export default function App() {
   const [selectedMeal, setSelectedMeal] = useState<MealDetailMeal | null>(null);
+  const [screen, setScreen] = useState<'home' | 'preferences'>('home');
+  const [preferences, setPreferences] = useState<UserPreferences>({
+    likes: [],
+    dislikes: [],
+    allergies: [],
+  });
+
+  const preferenceSummary = `${preferences.likes.length} likes | ${preferences.dislikes.length} dislikes | ${preferences.allergies.length} allergies`;
 
   return (
     <SafeAreaProvider>
@@ -71,8 +80,22 @@ export default function App() {
           onClose={() => setSelectedMeal(null)}
           onMakeMeal={() => Alert.alert('Saved', `${selectedMeal.name} added to your plan.`)}
         />
+      ) : screen === 'preferences' ? (
+        <PreferencesPage
+          preferences={preferences}
+          onClose={() => setScreen('home')}
+          onSave={(next) => {
+            setPreferences(next);
+            setScreen('home');
+            Alert.alert('Saved', 'Your food preferences were updated.');
+          }}
+        />
       ) : (
-        <HomePage onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))} />
+        <HomePage
+          onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
+          onOpenPreferences={() => setScreen('preferences')}
+          preferenceSummary={preferenceSummary}
+        />
       )}
     </SafeAreaProvider>
   );

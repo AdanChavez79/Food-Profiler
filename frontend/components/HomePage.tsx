@@ -30,6 +30,8 @@ export type HomeMeal = {
 
 type HomePageProps = {
   onOpenMeal?: (meal: HomeMeal) => void;
+  onOpenPreferences?: () => void;
+  preferenceSummary?: string;
 };
 
 const featuredMeal: HomeMeal = {
@@ -57,7 +59,7 @@ const mealNames = [
   "Spicy Tuna Poke Bowl",
 ];
 
-const HomePage = ({ onOpenMeal }: HomePageProps) => {
+const HomePage = ({ onOpenMeal, onOpenPreferences, preferenceSummary }: HomePageProps) => {
   const [expanded, setExpanded] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -168,16 +170,26 @@ const HomePage = ({ onOpenMeal }: HomePageProps) => {
             </View>
           </View>
 
-          {expanded && (
+          <View className="flex-row items-center gap-3">
+            {expanded && (
+              <Pressable
+                hitSlop={10}
+                onPress={() => setExpanded(false)}
+                style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
+                className="px-2 py-1"
+              >
+                <Text className="font-semibold text-emerald-600">Back</Text>
+              </Pressable>
+            )}
             <Pressable
               hitSlop={10}
-              onPress={() => setExpanded(false)}
+              onPress={onOpenPreferences}
               style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
               className="px-2 py-1"
             >
-              <Text className="font-semibold text-emerald-600">Back</Text>
+              <Text className="font-semibold text-slate-700">Prefs</Text>
             </Pressable>
-          )}
+          </View>
         </View>
       </View>
 
@@ -196,6 +208,11 @@ const HomePage = ({ onOpenMeal }: HomePageProps) => {
             <Text className="mb-4 mt-1 text-slate-600">
               Tap to see more options tailored for you
             </Text>
+            {preferenceSummary ? (
+              <View className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2">
+                <Text className="text-xs text-emerald-800">{preferenceSummary}</Text>
+              </View>
+            ) : null}
             <FeaturedCard meal={featuredMeal} />
           </View>
         ) : (
