@@ -126,9 +126,11 @@ async def add_user_allergy(user_id: int, allergy: int):
             return {"message": "Allergy insert success"}
     except Exception as e:
         return {"error": str(e)}
-    
+
+
+#
 @app.get("/all_ingredients")
-async def get_user_allergies():
+async def all_ingredients():
     try:
         async with app.state.pool.acquire() as conn:
             rows = await conn.fetch(
@@ -143,6 +145,9 @@ async def get_user_allergies():
     
 
 
+
+#When retrieved use +1 meal_id list
+@app.get("/get_ingredient_meal_list")    
 async def get_ingredient_meal_list(ingredient_id: int):
     async with app.state.pool.acquire() as conn:
         rows = await conn.fetch(
@@ -154,7 +159,8 @@ async def get_ingredient_meal_list(ingredient_id: int):
             ingredient_id            
             )
         return rows
-    
+
+@app.get("/meal")    
 async def get_meal(meal_id: int):
     async with app.state.pool.acquire() as conn:
         name = await conn.fetchval(
@@ -167,7 +173,9 @@ async def get_meal(meal_id: int):
             )
         return name
 
-    
+
+#
+@app.get("/meal_ingredients")    
 async def get_meal_ingredients(meal_id: int):
     async with app.state.pool.acquire() as conn:
         rows = await conn.fetch(
@@ -180,8 +188,9 @@ async def get_meal_ingredients(meal_id: int):
             meal_id            
             )
         return rows
-    
-    
+
+# 
+@app.get("/ingredient_id_from_name")
 async def get_ingredient_id_from_name(ingredient_name: str):
     async with app.state.pool.acquire() as conn:
         rows = await conn.fetch(
@@ -193,67 +202,90 @@ async def get_ingredient_id_from_name(ingredient_name: str):
             ingredient_name            
             )
         return rows
-
-
+#
+#@app.get("/num_meals")
 async def get_num_meals():
     async with app.state.pool.acquire() as conn:
         return await conn.fetchval("SELECT COUNT(*) FROM meals;")
    
+#meals eaten last week
+#ingredients eaten last week
+#total number of meals eaten last weke
 
-async def reccomend_food(profile: List[Tuple[str, int]], database_list: np.ndarray, matches_ingredients: List[List[Tuple[str, int]]]) -> Tuple[List[int], np.ndarray, List[List[str]]]:
-    meals_containing_ingredients = []
-    ingredients = []
-    for ingredient in profile: #ingredient and weight
-        x = 0
-        ingred_id = await get_ingredient_id_from_name(ingredient[0])
-        x = await get_ingredient_meal_list(ingred_id)
-        #meals_containing_ingredients.append(set(json.loads(x))) #get list of meals that have ingedient from inverted index, might thave to create api call (in this situation a list is needed)
-        #ingredients.append(ingredient) # add ingredient and weight to list
-        
-    #print("ingredients: " + str(ingredients))
-    """
-    for i, meals in enumerate(meals_containing_ingredients): #set meals
-        for meal in meals: #meal
-            if (meal >= 0 and meal < len(database_list)):
-                database_list[meal] += ingredients[i][1]  # Add the weight of the ingredient
-                matches_ingredients[meal].append(ingredients[i]) #add ingredient and weight to list of matches for meal
+async def recommend_food(profile, database_size):
+    #maybe make this a dictionary, name is key and score/weight is value
+    scores = np.zeros(database_size, dtype=int)
+    matched_ingredients = [[] for _ in range(database_size)]
 
+    ingredient_names = [name for name, _ in profile]
+    weight_lookup = {name: weight for name, weight in profile}
+
+    async with app.state.pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT mi.meal_id, i.name
+            FROM meal_ingredients mi
+            JOIN ingredients i ON i.id = mi.ingredient_id
+            WHERE i.name = ANY($1);
+            """,
+            ingredient_names
+        )
+
+    for meal_id, ingredient_name in rows:
+
+        index = meal_id - 1
+
+        if 0 <= index < database_size:
+            scores[index] += weight_lookup.get(ingredient_name, 0)
+            matched_ingredients[index].append(ingredient_name)
+
+    sorted_indices = np.argsort(scores)[::-1]
+
+
+    return sorted_indices.tolist(), matched_ingredients
+
+
+@app.get("/recommendations")
+async def run_and_print_recommendations():
+
+    flavor_profile = [
+        ("chicken", 3), ("avocado", 14), ("salmon", 10),
+        ("rice", 5), ("asparagus", 2), ("beef", 20),
+        ("corn", 6), ("broccoli", 7), ("carrots", 1),
+        ("onions", 10), ("carrot", 4), ("thyme", 1)
+    ]
+
+    num_meals = await get_num_meals()
+
+    recommended, matches = await recommend_food(flavor_profile, num_meals)
+
+
+    top_10 = recommended[:10]
+    top_10_ids = [i + 1 for i in top_10]  
+    top_10_ingredient_match = [matches[i] for i in top_10]
     
-    sorted_meals = (np.argsort(database_list)[::-1])  # Sort by index in descending order
-
-    sorted_meals = sorted_meals[:database_list.argmax(0)]  # Trim to only include meals that have at least one match
-
-    return sorted_meals.tolist(), matches_ingredients
-    """
-    return x
-
-async def my_function_1():
-    return [1, 2, 3]
-
-@app.get("/reccomendations")
-async def run_and_print_reccomendations():
-    start_time = time()
-
-    flavor_profile = [("chicken", 3), ("avocado", 14), ("salmon", 10), ("rice", 5), ("asparagus", 2), ("beef", 20), ("corn", 6), ("broccoli", 7), ("carrots", 1), ("onions", 10), ("carrot", 4), ("thyme", 1)]
-    n =  await get_num_meals() #databse size needed, might need api call
-    database_list = np.full(n, 0, dtype=int)
-    matches_ingredients = []
-    for i in range(n):
-        matches_ingredients.append([])
+    return {
+         "recommended_meals": top_10_ids,
+         "matched_ingredients": top_10_ingredient_match
+    }
 
 
-    #recommended_meals, matches_ingredients = await reccomend_food(flavor_profile, database_list, matches_ingredients) #if api calls are made we can remove inv from parameter list
 
-    #print_meals_from_id(recommended_meals[:10], matches_ingredients) #if api calls are made we can remove database_pd from parameter list
 
-    end_time = time()
-    #print(f"Execution time: {end_time - start_time} seconds")
 
-    apple = await reccomend_food(flavor_profile, database_list, matches_ingredients)
 
-    #return recommended_meals, matches_ingredients
-    return apple
-    
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # async def delete_all_rows_from_database():
