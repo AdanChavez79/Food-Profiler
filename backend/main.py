@@ -191,6 +191,45 @@ async def get_user_preferences_meals(user_id: int):
         return {"error": str(e)}
 
 
+@app.post("/add_meal_history_and_update_flavor_profile")
+async def add_meal_history_and_update_flavor_profile(user_id: int, meal_id: int):
+    try:
+        async with app.state.pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO user_preferences_ingredients (user_id, ingredient_id, score)
+                SELECT $1, ingredient_id, 1
+                FROM meal_ingredients
+                WHERE meal_id = $2
+
+                
+                ON CONFLICT (user_id, ingredient_id) DO UPDATE
+                SET score = user_preferences_ingredients.score + 1;
+                """,
+                user_id,
+                meal_id
+            )
+
+            await conn.execute(
+                """
+                INSERT INTO user_preferences_meals (user_id, meal_id, score)
+                VALUES ($1, $2, 1)
+
+                ON CONFLICT (user_id, meal_id) DO UPDATE
+                SET score = user_preferences_meals.score + 1
+                WHERE user_preferences_meals.user_id = $1 AND user_preferences_meals.meal_id = $2;
+                """,
+                user_id,
+                meal_id
+            )
+
+            await add_meal_history(user_id, meal_id)
+        return {"message": "Meal history and flavor profile update success"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
 @app.post("/add_meal_history")
 async def add_meal_history(user_id: int, meal_id: int):
     try:
