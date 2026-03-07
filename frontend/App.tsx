@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import HomePage, { HomeMeal } from 'components/HomePage';
 import MealDetailPage from 'components/MealDetailPage';
 import PreferencesPage, { UserPreferences } from 'components/PreferencesPage';
+import SearchPage from 'components/SearchPage';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './global.css';
@@ -63,7 +64,7 @@ const toDetailMeal = (meal: HomeMeal): MealDetailMeal => {
 
 export default function App() {
   const [selectedMeal, setSelectedMeal] = useState<MealDetailMeal | null>(null);
-  const [screen, setScreen] = useState<'home' | 'preferences'>('home');
+  const [screen, setScreen] = useState<'home' | 'preferences' | 'search'>('home');
   const [preferences, setPreferences] = useState<UserPreferences>({
     likes: [],
     dislikes: [],
@@ -90,10 +91,13 @@ export default function App() {
             Alert.alert('Saved', 'Your food preferences were updated.');
           }}
         />
+      ) : screen === 'search' ? (
+        <SearchPage onBack={() => setScreen('home')} onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))} />
       ) : (
         <HomePage
           onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
           onOpenPreferences={() => setScreen('preferences')}
+          onOpenSearch={() => setScreen('search')}
           preferenceSummary={preferenceSummary}
         />
       )}

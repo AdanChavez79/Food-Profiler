@@ -5,6 +5,7 @@ web-build/
 expo-env.d.ts
 .env*
 venv/
+.venv
 *.pyc
 
 *.jks

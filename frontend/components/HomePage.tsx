@@ -31,6 +31,7 @@ export type HomeMeal = {
 type HomePageProps = {
   onOpenMeal?: (meal: HomeMeal) => void;
   onOpenPreferences?: () => void;
+  onOpenSearch?: () => void;
   preferenceSummary?: string;
 };
 
@@ -59,7 +60,12 @@ const mealNames = [
   "Spicy Tuna Poke Bowl",
 ];
 
-const HomePage = ({ onOpenMeal, onOpenPreferences, preferenceSummary }: HomePageProps) => {
+const HomePage = ({
+  onOpenMeal,
+  onOpenPreferences,
+  onOpenSearch,
+  preferenceSummary,
+}: HomePageProps) => {
   const [expanded, setExpanded] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -247,6 +253,7 @@ const HomePage = ({ onOpenMeal, onOpenPreferences, preferenceSummary }: HomePage
 
           <Pressable
             hitSlop={8}
+            onPress={onOpenSearch}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             className="items-center"
           >
