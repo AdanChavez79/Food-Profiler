@@ -19,6 +19,8 @@ app = FastAPI()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+
+
 def token_positions(tokens: List[str]) -> Dict[str, List[int]]:
     pos = defaultdict(list)
     for i, t in enumerate(tokens):
@@ -50,50 +52,8 @@ app = FastAPI(lifespan=lifespan)
 async def root():
     return {"message": "Hello World!"}
 
-@app.get("/users")
-async def get_all_usernames():
-    try:
-        async with app.state.pool.acquire() as conn:
-            rows = await conn.fetch("SELECT username FROM users;")
-            return rows
-    except Exception as e:
-        return {"error": str(e)}
     
-@app.get("/user_preferences_meals")
-async def get_user_preferences_meals(user_id: int):
-    try:
-        async with app.state.pool.acquire() as conn:
-            rows = await conn.fetch(
-                """
-                SELECT m.name, upm.preference
-                FROM user_preferences_meals upm
-                JOIN meals m ON upm.meal_id = m.id
-                WHERE upm.user_id = $1;
-                """,
-                user_id
-            )
-            return rows
-    except Exception as e:
-        return {"error": str(e)}
-
-@app.get("/user_preferences_ingredients")
-async def get_user_preferences_ingredients(user_id: int):
-    try:
-        async with app.state.pool.acquire() as conn:
-            rows = await conn.fetch(
-                """
-                SELECT i.name, upi.preference
-                FROM user_preferences_ingredients upi
-                JOIN ingredients i ON upi.ingredient_id = i.id
-                WHERE upi.user_id = $1;
-                """,
-                user_id
-            )
-            return rows
-    except Exception as e:
-        return {"error": str(e)}
-    
-
+#might just add allergies table, that has hardcoded options for the user
 @app.get("/user_allergies")
 async def get_user_allergies(user_id: int):
     try:
@@ -108,22 +68,6 @@ async def get_user_allergies(user_id: int):
                 user_id
             )
             return rows
-    except Exception as e:
-        return {"error": str(e)}
-    
-@app.post("/add_user_allergy")
-async def add_user_allergy(user_id: int, allergy: int):
-    try:
-        async with app.state.pool.acquire() as conn:
-            await conn.execute(
-                """
-                INSERT INTO user_allergies (user_id, ingredient_id)
-                VALUES ($1, $2)
-                """,
-                user_id,
-                allergy
-            )
-            return {"message": "Allergy insert success"}
     except Exception as e:
         return {"error": str(e)}
 
@@ -146,35 +90,35 @@ async def all_ingredients():
 
 
 
-#When retrieved use +1 meal_id list
-@app.get("/get_ingredient_meal_list")    
-async def get_ingredient_meal_list(ingredient_id: int):
-    async with app.state.pool.acquire() as conn:
-        rows = await conn.fetch(
-            """
-            SELECT i.meals
-            FROM ingredients i
-            WHERE i.id = $1;
-            """,
-            ingredient_id            
-            )
-        return rows
+#When retrieved use +1 meal_id list, this is using JSONB stored in ingredients
+# @app.get("/get_ingredient_meal_list")    
+# async def get_ingredient_meal_list(ingredient_id: int):
+#     async with app.state.pool.acquire() as conn:
+#         rows = await conn.fetch(
+#             """
+#             SELECT i.meals
+#             FROM ingredients i
+#             WHERE i.id = $1;
+#             """,
+#             ingredient_id            
+#             )
+#         return rows
 
 @app.get("/meal")    
 async def get_meal(meal_id: int):
     async with app.state.pool.acquire() as conn:
-        name = await conn.fetchval(
+        meal = await conn.fetchrow(
             """
-            SELECT m.name
+            SELECT *
             FROM meals m
             WHERE m.id = $1;
             """,
             meal_id            
             )
-        return name
+        return meal
 
 
-#
+#Might not need if we are retrieving all meal data for frontend
 @app.get("/meal_ingredients")    
 async def get_meal_ingredients(meal_id: int):
     async with app.state.pool.acquire() as conn:
@@ -189,28 +133,88 @@ async def get_meal_ingredients(meal_id: int):
             )
         return rows
 
-# 
-@app.get("/ingredient_id_from_name")
-async def get_ingredient_id_from_name(ingredient_name: str):
-    async with app.state.pool.acquire() as conn:
-        rows = await conn.fetch(
-            """
-            SELECT i.id
-            FROM ingredients i        
-            WHERE i.name = $1;
-            """,
-            ingredient_name            
+
+
+
+
+
+
+@app.post("/add_user_allergy")
+async def add_user_allergy(user_id: int, allergy: int):
+    try:
+        async with app.state.pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO user_allergies (user_id, ingredient_id)
+                VALUES ($1, $2)
+                """,
+                user_id,
+                allergy
             )
-        return rows
-#
-#@app.get("/num_meals")
+            return {"message": "Allergy insert success"}
+    except Exception as e:
+        return {"error": str(e)}
+    
+@app.get("/user_preferences_ingredients")
+async def get_user_preferences_ingredients(user_id: int):
+    try:
+        async with app.state.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT i.name, upi.score
+                FROM user_preferences_ingredients upi
+                JOIN ingredients i ON upi.ingredient_id = i.id
+                WHERE upi.user_id = $1;
+                """,
+                user_id
+            )
+            return rows
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/user_preferences_meals")
+async def get_user_preferences_meals(user_id: int):
+    try:
+        async with app.state.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT m.name, upm.score
+                FROM user_preferences_meals upm
+                JOIN meals m ON upm.meal_id = m.id
+                WHERE upm.user_id = $1;
+                """,
+                user_id
+            )
+            return rows
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@app.get("/add_meal_history")
+async def add_meal_history(user_id: int, meal_id: int):
+    try:
+        async with app.state.pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO user_meal_history (user_id, meal_id)
+                VALUES ($1, $2)
+                """,
+                user_id,
+                meal_id
+            )
+            return {"message": "Allergy insert success"}
+    except Exception as e:
+        return {"error": str(e)}
+    
+#meals eaten last week
+#ingredients eaten last week
+#total number of meals eaten last weke
+
 async def get_num_meals():
     async with app.state.pool.acquire() as conn:
         return await conn.fetchval("SELECT COUNT(*) FROM meals;")
    
-#meals eaten last week
-#ingredients eaten last week
-#total number of meals eaten last weke
 
 async def recommend_food(profile, database_size):
     #maybe make this a dictionary, name is key and score/weight is value
@@ -245,27 +249,39 @@ async def recommend_food(profile, database_size):
     return sorted_indices.tolist(), matched_ingredients
 
 
-@app.get("/recommendations")
-async def run_and_print_recommendations():
 
-    flavor_profile = [
-        ("chicken", 3), ("avocado", 14), ("salmon", 10),
-        ("rice", 5), ("asparagus", 2), ("beef", 20),
-        ("corn", 6), ("broccoli", 7), ("carrots", 1),
-        ("onions", 10), ("carrot", 4), ("thyme", 1)
-    ]
+@app.get("/recommendations")
+async def run_and_print_recommendations(user_id: int):
+
+    # call user_preferences_ingredients, this is now in DB 
+    #All users will start will no flavor profile, we can suggest premade flavor profiles at
+    #app start, t avoid randome 
+    # flavor_profile = [
+    #     ("chicken", 3), ("avocado", 14), ("salmon", 10),
+    #     ("rice", 5), ("beef", 20),
+    #     ("corn", 6), ("broccoli", 7),
+    #     ("onion", 10), ("carrot", 4), ("thyme", 1)
+    # ]
+
+    ingredient_preferences = await get_user_preferences_ingredients(user_id)
+    
 
     num_meals = await get_num_meals()
 
-    recommended, matches = await recommend_food(flavor_profile, num_meals)
-
-
+    recommended, matches = await recommend_food(ingredient_preferences, num_meals)
     top_10 = recommended[:10]
     top_10_ids = [i + 1 for i in top_10]  
+
+    async with app.state.pool.acquire() as conn:
+        meals = await conn.fetch(
+            "SELECT * FROM meals WHERE id = ANY($1::int[])",
+            top_10_ids
+        )
+
     top_10_ingredient_match = [matches[i] for i in top_10]
     
     return {
-         "recommended_meals": top_10_ids,
+         "recommended_meals": meals,
          "matched_ingredients": top_10_ingredient_match
     }
 
