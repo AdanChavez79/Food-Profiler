@@ -191,7 +191,7 @@ async def get_user_preferences_meals(user_id: int):
         return {"error": str(e)}
 
 
-@app.get("/add_meal_history")
+@app.post("/add_meal_history")
 async def add_meal_history(user_id: int, meal_id: int):
     try:
         async with app.state.pool.acquire() as conn:
@@ -203,7 +203,7 @@ async def add_meal_history(user_id: int, meal_id: int):
                 user_id,
                 meal_id
             )
-            return {"message": "Allergy insert success"}
+            return {"message": "Meal history insert success"}
     except Exception as e:
         return {"error": str(e)}
     
