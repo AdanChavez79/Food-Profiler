@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ImageBackground,
   Pressable,
@@ -15,12 +15,14 @@ import {
   History,
   Home,
   Search,
+  Star,
 } from "lucide-react-native";
 
 export type HomeMeal = {
   id: string;
   name: string;
   image: string;
+  rating: number;
   cost: number;
   difficulty: string;
   totalTime: number;
@@ -42,23 +44,24 @@ const featuredMeal: HomeMeal = {
     "https://images.unsplash.com/photo-1662611284583-f34180194370?auto=format&fit=crop&w=1400&q=80",
   cost: 8.5,
   difficulty: "Easy",
+  rating: 5,
   totalTime: 35,
   calories: 420,
   protein: 35,
 };
 
-const mealNames = [
-  "Lemon Herb Salmon Bowl",
-  "Turkey Taco Lettuce Wraps",
-  "Garlic Shrimp Pasta",
-  "Mediterranean Chickpea Plate",
-  "Teriyaki Tofu Stir Fry",
-  "Beef & Broccoli Rice Bowl",
-  "Avocado Egg Toast Stack",
-  "Thai Peanut Chicken Noodles",
-  "Roasted Veggie Quinoa Mix",
-  "Spicy Tuna Poke Bowl",
-];
+// const mealNames = [
+//   "Lemon Herb Salmon Bowl",
+//   "Turkey Taco Lettuce Wraps",
+//   "Garlic Shrimp Pasta",
+//   "Mediterranean Chickpea Plate",
+//   "Teriyaki Tofu Stir Fry",
+//   "Beef & Broccoli Rice Bowl",
+//   "Avocado Egg Toast Stack",
+//   "Thai Peanut Chicken Noodles",
+//   "Roasted Veggie Quinoa Mix",
+//   "Spicy Tuna Poke Bowl",
+// ];
 
 const HomePage = ({
   onOpenMeal,
@@ -69,23 +72,59 @@ const HomePage = ({
   const [expanded, setExpanded] = useState(false);
   const insets = useSafeAreaInsets();
 
-  const recommendations = useMemo<HomeMeal[]>(
-    () =>
-      Array.from({ length: 10 }, (_, i) => {
-        if (i === 0) return featuredMeal;
-        return {
-          ...featuredMeal,
-          id: String(i + 1),
-          name: mealNames[i - 1] ?? `Meal Recommendation ${i + 1}`,
-          totalTime: 25 + i * 3,
-          cost: Number((7.5 + i * 0.65).toFixed(2)),
-          calories: 360 + i * 25,
-          protein: 24 + i * 2,
-          difficulty: i % 3 === 0 ? "Easy" : i % 3 === 1 ? "Medium" : "Hard",
-        };
-      }),
-    []
-  );
+  const [recommendations, setRecommendations] = useState<HomeMeal[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMeals = async () => {
+      try {
+        const response = await fetch(
+          "http://127.0.0.1:8000/recommendations?user_id=3"
+        );
+
+        const data = await response.json();
+
+        const formattedMeals = data.recommended_meals.map((meal: any) => ({
+          id: String(meal.id),
+          name: meal.name,
+          image: JSON.parse(meal.images.replace(/'/g, '"'))[0],
+          rating: meal.aggregated_rating,
+          totalTime: meal.totaltime_min,
+          calories: meal.calories,
+
+          cost: 8.5, 
+          difficulty: "Easy", 
+          protein: 25
+        }));
+
+        setRecommendations(formattedMeals);
+        console.log(formattedMeals);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMeals();
+  }, []);
+  // const recommendations = useMemo<HomeMeal[]>(
+  //   () =>
+  //     Array.from({ length: 10 }, (_, i) => {
+  //       if (i === 0) return featuredMeal;
+  //       return {
+  //         ...featuredMeal,
+  //         id: String(i + 1),
+  //         name: mealNames[i - 1] ?? `Meal Recommendation ${i + 1}`,
+  //         totalTime: 25 + i * 3,
+  //         cost: Number((7.5 + i * 0.65).toFixed(2)),
+  //         calories: 360 + i * 25,
+  //         protein: 24 + i * 2,
+  //         difficulty: i % 3 === 0 ? "Easy" : i % 3 === 1 ? "Medium" : "Hard",
+  //       };
+  //     }),
+  //   []
+  // );
 
   const MealStats = ({ meal }: { meal: HomeMeal }) => (
     <View className="mt-2 flex-row items-center gap-4">
@@ -94,13 +133,17 @@ const HomePage = ({
         <Text className="ml-1 text-sm text-white/90">{meal.totalTime} min</Text>
       </View>
       <View className="flex-row items-center">
+        <Star size={14} color="#FFFFFF" />
+        <Text className="ml-1 text-sm text-white/90">{meal.rating}</Text>
+      </View>
+      {/* <View className="flex-row items-center">
         <DollarSign size={14} color="#FFFFFF" />
         <Text className="ml-1 text-sm text-white/90">${meal.cost.toFixed(2)}</Text>
       </View>
       <View className="flex-row items-center">
         <ChefHat size={14} color="#FFFFFF" />
         <Text className="ml-1 text-sm text-white/90">{meal.difficulty}</Text>
-      </View>
+      </View> */}
     </View>
   );
 
@@ -124,7 +167,7 @@ const HomePage = ({
             <Text className="text-2xl font-bold text-white">{meal.name}</Text>
             <MealStats meal={meal} />
             <Text className="mt-3 text-xs text-white/80">
-              {meal.calories} calories - {meal.protein}g protein
+              {meal.calories} calories
             </Text>
           </View>
         </LinearGradient>
@@ -154,7 +197,7 @@ const HomePage = ({
             <Text className="text-xl font-bold text-white">{meal.name}</Text>
             <MealStats meal={meal} />
             <Text className="mt-3 text-xs text-white/80">
-              {meal.calories} calories - {meal.protein}g protein
+              {meal.calories} calories 
             </Text>
           </LinearGradient>
         </ImageBackground>
