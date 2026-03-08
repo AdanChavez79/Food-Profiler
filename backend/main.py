@@ -10,8 +10,7 @@ import os
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 import asyncio
-
-
+from fastapi.middleware.cors import CORSMiddleware
 
 load_dotenv()
 
@@ -38,6 +37,8 @@ def build_inverted_index_simple(df: pd.DataFrame) -> Dict[str, List[int]]:
         idx[term].sort(key=lambda p: p)
     return dict(idx)
 
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Connecting to DB")
@@ -47,6 +48,14 @@ async def lifespan(app: FastAPI):
     await app.state.pool.close()
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 async def root():
