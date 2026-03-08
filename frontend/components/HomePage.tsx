@@ -17,16 +17,26 @@ import {
   Search,
   Star,
 } from "lucide-react-native";
+import { steps } from "react-native-reanimated";
 
 export type HomeMeal = {
   id: string;
   name: string;
   image: string;
   rating: number;
-  cost: number;
-  difficulty: string;
   totalTime: number;
   calories: number;
+  calories_classification: string;
+  macro_classification: string;
+  servings: number;
+  recipe_category: string;
+
+
+
+
+
+  cost: number;
+  difficulty: string;
   protein: number;
 };
 
@@ -48,6 +58,12 @@ const featuredMeal: HomeMeal = {
   totalTime: 35,
   calories: 420,
   protein: 35,
+	calories_classification: "string",
+	macro_classification: "string",
+  servings: 10,
+  recipe_category: "string",
+
+
 };
 
 // const mealNames = [
@@ -73,7 +89,6 @@ const HomePage = ({
   const insets = useSafeAreaInsets();
 
   const [recommendations, setRecommendations] = useState<HomeMeal[]>([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchMeals = async () => {
@@ -91,6 +106,13 @@ const HomePage = ({
           rating: meal.aggregated_rating,
           totalTime: meal.totaltime_min,
           calories: meal.calories,
+          calories_classification: meal.calories_classification,
+	        macro_classification: meal.macro_classification,
+          servings: meal.servings,
+          recipe_instructions: meal.recipe_instructions,
+          recipe_category: meal.recipe_category,
+
+          
 
           cost: 8.5, 
           difficulty: "Easy", 
@@ -101,9 +123,7 @@ const HomePage = ({
         console.log(formattedMeals);
       } catch (err) {
         console.error(err);
-      } finally {
-        setLoading(false);
-      }
+      } 
     };
 
     fetchMeals();

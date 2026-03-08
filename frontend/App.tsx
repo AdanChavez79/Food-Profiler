@@ -22,9 +22,14 @@ type MealDetailMeal = {
   protein: number;
   carbs: number;
   fat: number;
+  rating: number;
+  recipe_category: string;
+  macro_classification: string;
+  calories_classification: string;
   ingredients: string[];
   steps: string[];
 };
+
 
 const ingredients = [
   '2 chicken breasts',
