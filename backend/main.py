@@ -324,6 +324,8 @@ async def get_num_meals():
 
 async def recommend_food(profile, database_size):
     #maybe make this a dictionary, name is key and score/weight is value
+    start_time = time()
+
     scores = np.zeros(database_size, dtype=int)
     matched_ingredients = [[] for _ in range(database_size)]
 
@@ -339,7 +341,7 @@ async def recommend_food(profile, database_size):
     for row in meal_weights:
         meal_id = row["meal_id"]
         score = row["score"]
-        
+
         scores[meal_id - 1] += score
 
     ingredient_names = [name for name, _ in profile]
@@ -366,6 +368,9 @@ async def recommend_food(profile, database_size):
 
     sorted_indices = np.argsort(scores)[::-1]
 
+    end_time = time()
+
+    print("reccomend time: " + str(end_time - start_time))
 
     return sorted_indices.tolist(), matched_ingredients
 
@@ -384,6 +389,8 @@ async def run_and_print_recommendations(user_id: int):
     #     ("onion", 10), ("carrot", 4), ("thyme", 1)
     # ]
 
+    start_time = time()
+
     ingredient_preferences = await get_user_preferences_ingredients(user_id)
     
 
@@ -393,6 +400,8 @@ async def run_and_print_recommendations(user_id: int):
     top_10 = recommended[:10]
     top_10_ids = [i + 1 for i in top_10]  
 
+
+    
     async with app.state.pool.acquire() as conn:
         meals = await conn.fetch(
             "SELECT * FROM meals WHERE id = ANY($1::int[])",
@@ -401,6 +410,10 @@ async def run_and_print_recommendations(user_id: int):
 
     top_10_ingredient_match = [matches[i] for i in top_10]
     
+    end_time = time()
+
+    print("reccomendations time: " + str(end_time - start_time))
+
     return {
          "recommended_meals": meals,
          "matched_ingredients": top_10_ingredient_match
