@@ -200,7 +200,7 @@ async def get_user_preferences_meals(user_id: int):
         return {"error": str(e)}
 
 
-meals_since_eaten_threshold = 6
+meals_since_eaten_threshold = 10
 
 @app.post("/add_meal_history_and_update_flavor_profile")
 async def add_meal_history_and_update_flavor_profile(user_id: int, meal_id: int):
@@ -210,8 +210,8 @@ async def add_meal_history_and_update_flavor_profile(user_id: int, meal_id: int)
                 #add or update flavor score of ingredient
 
                 """
-                INSERT INTO user_preferences_ingredients (user_id, ingredient_id, score)
-                SELECT $1, ingredient_id, 1
+                INSERT INTO user_preferences_ingredients (user_id, ingredient_id, score, meals_since_eaten)
+                SELECT $1, ingredient_id, 1, 0
                 FROM meal_ingredients
                 WHERE meal_id = $2
 
@@ -327,6 +327,18 @@ async def recommend_food(profile, database_size):
     scores = np.zeros(database_size, dtype=int)
     matched_ingredients = [[] for _ in range(database_size)]
 
+    async with app.state.pool.acquire() as conn:
+        meal_weights = await conn.fetch(
+            """
+            SELECT mi.meal_id, mi.score
+            FROM meal_ingredients mi
+            WHERE mi.meals_since_eaten > 1;
+            """,
+            ingredient_names
+        )
+
+    scores[meal_weights[0] - 1] += meal_weights[1]
+
     ingredient_names = [name for name, _ in profile]
     weight_lookup = {name: weight for name, weight in profile}
 
@@ -396,8 +408,60 @@ async def run_and_print_recommendations(user_id: int):
 
 
 
+@app.post("/populate_meal_ingredients_table_and_ingredients_table")
+async def populates_meal_ingredients_table_and_ingredients_table():
+    try:
+        async with app.state.pool.acquire() as conn:
+            database_pd = (pd.read_csv('recipes_final.csv')).fillna(0)
+            database_pd.rename(columns={'Unnamed: 0': 'Index'}, inplace=True)
+            database_pd["Index"] = database_pd.index
+            
+            column_name = "RecipeIngredientParts" #partially tokenized#         
+            #column_name = "RecipeIngredientParts_clean_list" #heavily tokenized
 
 
+            database_pd[column_name] = database_pd[column_name].map(str)
+            database_pd[column_name] = database_pd[column_name].replace("',", '",', regex=True)
+            database_pd[column_name] = database_pd[column_name].replace(", '", ', "', regex=True)
+            database_pd[column_name] = database_pd[column_name].replace("']", '"]', regex=True)
+            database_pd[column_name] = database_pd[column_name].replace(r"\['", '["', regex=True)
+            
+
+            database_pd["tokens"] = database_pd[column_name].map(json.loads)
+            database_pd["tokens"] = database_pd["tokens"].map(np.sort)
+
+            database_pd["pos"] = database_pd["tokens"].map(token_positions)
+
+            inverted_index = build_inverted_index_simple(database_pd)
+
+            ingredient_rows = []
+            meal_ingredient_rows = []
+            
+            for index, (key, value) in enumerate(inverted_index.items()):
+                ingredient_rows.append((str(key), str(value)))
+
+                for meal_id in value:
+                    meal_ingredient_rows.append((int(meal_id + 1), int(index + 1), str(database_pd.loc[meal_id, "RecipeServings"])))
+
+            await conn.executemany(
+                """
+                INSERT INTO ingredients (name, meals)
+                VALUES ($1, $2)
+                """,
+                ingredient_rows
+            )
+
+
+            await conn.executemany(
+                """
+                INSERT INTO meal_ingredients (meal_id, ingredient_id, serving)
+                VALUES ($1, $2, $3)
+            """,
+                meal_ingredient_rows
+            )
+        return {"message": "Ingredients and meal_ingredients tables populated successfully"}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 
