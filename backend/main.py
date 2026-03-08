@@ -333,8 +333,7 @@ async def recommend_food(profile, database_size):
             SELECT mi.meal_id, mi.score
             FROM meal_ingredients mi
             WHERE mi.meals_since_eaten > 1;
-            """,
-            ingredient_names
+            """
         )
 
     scores[meal_weights[0] - 1] += meal_weights[1]
