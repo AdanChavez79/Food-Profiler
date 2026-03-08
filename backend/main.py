@@ -330,13 +330,17 @@ async def recommend_food(profile, database_size):
     async with app.state.pool.acquire() as conn:
         meal_weights = await conn.fetch(
             """
-            SELECT mi.meal_id, mi.score
-            FROM meal_ingredients mi
-            WHERE mi.meals_since_eaten > 1;
+            SELECT meal_id, score
+            FROM user_preferences_meals
+            WHERE meals_since_eaten > 1;
             """
         )
 
-    scores[meal_weights[0] - 1] += meal_weights[1]
+    for row in meal_weights:
+        meal_id = row["meal_id"]
+        score = row["score"]
+        
+        scores[meal_id - 1] += score
 
     ingredient_names = [name for name, _ in profile]
     weight_lookup = {name: weight for name, weight in profile}
