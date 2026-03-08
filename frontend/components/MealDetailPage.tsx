@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+
 import {
   ImageBackground,
   Pressable,
@@ -15,6 +16,8 @@ import {
   ChefHat,
   Users,
   Flame,
+  Star,
+
 } from "lucide-react-native";
 
 type Meal = {
@@ -31,6 +34,10 @@ type Meal = {
   protein: number;
   carbs: number;
   fat: number;
+  rating: number;
+  recipe_category: string;
+  macro_classification: string;
+  calories_classification: string;
   ingredients: string[];
   steps: string[];
 };
@@ -74,11 +81,34 @@ const sampleMeal: Meal = {
     "Bake for 25 minutes until chicken is cooked through",
     "Let rest for 5 minutes before serving",
   ],
+
+  rating: 5,
+  macro_classification: "string",
+  calories_classification: "string",
+  recipe_category: "string",
 };
 
 const MealDetailPage = ({ meal = sampleMeal, onClose, onMakeMeal }: MealDetailProps) => {
   const insets = useSafeAreaInsets();
+  const [ingredients, setIngredients] = useState<string[]>(meal.ingredients);
+  useEffect(() => {
+    const fetchIngredients = async () => {
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/meal_ingredients?meal_id=${meal.id}`
+        );
+        const data = await response.json();
 
+        const ingredientNames = data.map((item: { name: string }) => item.name);
+        console.log(ingredientNames);
+        setIngredients(ingredientNames); 
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchIngredients();
+  }, [meal.id]);
   return (
     <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
       <ScrollView
@@ -121,27 +151,27 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onMakeMeal }: MealDetailPr
                 <Text className="text-sm text-gray-600">Total Time</Text>
               </View>
               <Text className="text-xl font-semibold text-gray-900">{meal.totalTime} min</Text>
-              <Text className="text-xs text-gray-500">
+              {/* <Text className="text-xs text-gray-500">
                 Prep: {meal.prepTime}min • Cook: {meal.cookTime}min
-              </Text>
+              </Text> */}
             </View>
 
             <View className="w-[48.5%] rounded-xl bg-gray-50 p-4">
               <View className="mb-2 flex-row items-center gap-2">
-                <DollarSign size={16} color="#4B5563" />
-                <Text className="text-sm text-gray-600">Cost</Text>
+                <Star size={16} color="#4B5563" />
+                <Text className="text-sm text-gray-600">Rating</Text>
               </View>
-              <Text className="text-xl font-semibold text-gray-900">${meal.cost.toFixed(2)}</Text>
-              <Text className="text-xs text-gray-500">Per serving</Text>
+              <Text className="text-xl font-semibold text-gray-900">{meal.rating}</Text>
+              {/* <Text className="text-xs text-gray-500">Per serving</Text> */}
             </View>
 
             <View className="w-[48.5%] rounded-xl bg-gray-50 p-4">
               <View className="mb-2 flex-row items-center gap-2">
                 <ChefHat size={16} color="#4B5563" />
-                <Text className="text-sm text-gray-600">Difficulty</Text>
+                <Text className="text-sm text-gray-600">Recipe Category</Text>
               </View>
-              <Text className="text-xl font-semibold text-gray-900">{meal.difficulty}</Text>
-              <Text className="text-xs text-gray-500">Skill level</Text>
+              <Text className="text-xl font-semibold text-gray-900">{meal.recipe_category}</Text>
+              {/* <Text className="text-xs text-gray-500">Skill level</Text> */}
             </View>
 
             <View className="w-[48.5%] rounded-xl bg-gray-50 p-4">
@@ -165,24 +195,24 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onMakeMeal }: MealDetailPr
                 <Text className="text-xs text-gray-600">Calories</Text>
               </View>
               <View className="items-center">
-                <Text className="text-2xl font-bold text-emerald-600">{meal.protein}g</Text>
-                <Text className="text-xs text-gray-600">Protein</Text>
+                <Text className="text-2xl font-bold text-emerald-600">{meal.calories_classification}</Text>
+                <Text className="text-xs text-gray-600">Calories class</Text>
               </View>
               <View className="items-center">
-                <Text className="text-2xl font-bold text-emerald-600">{meal.carbs}g</Text>
-                <Text className="text-xs text-gray-600">Carbs</Text>
+                <Text className="text-2xl font-bold text-emerald-600">{meal.macro_classification}</Text>
+                <Text className="text-xs text-gray-600">Macro class</Text>
               </View>
-              <View className="items-center">
+              {/* <View className="items-center">
                 <Text className="text-2xl font-bold text-emerald-600">{meal.fat}g</Text>
                 <Text className="text-xs text-gray-600">Fat</Text>
-              </View>
+              </View> */}
             </View>
           </View>
 
           <View className="mb-6">
             <Text className="mb-3 text-xl font-semibold text-gray-900">Ingredients</Text>
             <View className="gap-2">
-              {meal.ingredients.map((ingredient) => (
+              {ingredients.map((ingredient) => (
                 <View key={ingredient} className="flex-row items-start gap-3">
                   <View className="mt-2 h-2 w-2 rounded-full bg-emerald-500" />
                   <Text className="flex-1 text-gray-700">{ingredient}</Text>
