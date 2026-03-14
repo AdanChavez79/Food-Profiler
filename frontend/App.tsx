@@ -27,7 +27,7 @@ type MealDetailMeal = {
   macro_classification: string;
   calories_classification: string;
   ingredients: string[];
-  steps: string[];
+  instructions: string[];
 };
 
 
@@ -42,7 +42,7 @@ const ingredients = [
   '1 tsp Italian seasoning',
 ];
 
-const steps = [
+const instructions = [
   'Preheat oven to 400F (200C)',
   'Season chicken breasts with salt, pepper, and garlic powder',
   'Arrange chicken and vegetables on a baking sheet',
@@ -63,7 +63,7 @@ const toDetailMeal = (meal: HomeMeal): MealDetailMeal => {
     carbs: 28,
     fat: 18,
     ingredients,
-    steps,
+    instructions,
   };
 };
 

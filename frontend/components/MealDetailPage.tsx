@@ -39,7 +39,7 @@ type Meal = {
   macro_classification: string;
   calories_classification: string;
   ingredients: string[];
-  steps: string[];
+  instructions: string[];
 };
 
 type MealDetailProps = {
@@ -73,14 +73,7 @@ const sampleMeal: Meal = {
     "Salt and pepper to taste",
     "1 tsp Italian seasoning",
   ],
-  steps: [
-    "Preheat oven to 400°F (200°C)",
-    "Season chicken breasts with salt, pepper, and garlic powder",
-    "Arrange chicken and vegetables on a baking sheet",
-    "Drizzle with olive oil and sprinkle Italian seasoning",
-    "Bake for 25 minutes until chicken is cooked through",
-    "Let rest for 5 minutes before serving",
-  ],
+  instructions: ["Example"],
 
   rating: 5,
   macro_classification: "string",
@@ -224,7 +217,7 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onMakeMeal }: MealDetailPr
           <View>
             <Text className="mb-3 text-xl font-semibold text-gray-900">Instructions</Text>
             <View className="gap-4">
-              {meal.steps.map((step, index) => (
+              {meal.instructions.map((step, index) => (
                 <View key={`${index + 1}-${step}`} className="flex-row items-start gap-4">
                   <View className="h-8 w-8 items-center justify-center rounded-full bg-emerald-500">
                     <Text className="font-semibold text-white">{index + 1}</Text>

@@ -30,6 +30,7 @@ export type HomeMeal = {
   macro_classification: string;
   servings: number;
   recipe_category: string;
+  instructions: string[];
 
 
 
@@ -62,6 +63,8 @@ const featuredMeal: HomeMeal = {
 	macro_classification: "string",
   servings: 10,
   recipe_category: "string",
+  instructions: ["Example"],
+
 
 
 };
@@ -78,6 +81,17 @@ const featuredMeal: HomeMeal = {
 //   "Roasted Veggie Quinoa Mix",
 //   "Spicy Tuna Poke Bowl",
 // ];
+function parseInstructions(str: string): string[] {
+  const matches = str.match(/'([^']*)'|"([^"]*)"/g) || [];
+
+  return matches.map((s: string) =>
+    s
+      .slice(1, -1)             
+      .replace(/\n/g, " ")      
+      .replace(/,([^\s])/g, ", $1") 
+      .trim()                    
+  );
+}
 
 const HomePage = ({
   onOpenMeal,
@@ -109,7 +123,7 @@ const HomePage = ({
           calories_classification: meal.calories_classification,
 	        macro_classification: meal.macro_classification,
           servings: meal.servings,
-          recipe_instructions: meal.recipe_instructions,
+          instructions: parseInstructions(meal.recipe_instructions),
           recipe_category: meal.recipe_category,
 
           
@@ -121,6 +135,7 @@ const HomePage = ({
 
         setRecommendations(formattedMeals);
         console.log(formattedMeals);
+
       } catch (err) {
         console.error(err);
       } 
@@ -145,6 +160,7 @@ const HomePage = ({
   //     }),
   //   []
   // );
+  
 
   const MealStats = ({ meal }: { meal: HomeMeal }) => (
     <View className="mt-2 flex-row items-center gap-4">
