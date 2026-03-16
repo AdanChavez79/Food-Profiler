@@ -8,20 +8,22 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './global.css';
 
+import { RecommendationsProvider } from './RecommendationsContext';
+
 type MealDetailMeal = {
   id: string;
   name: string;
   image: string;
-  cost: number;
-  difficulty: string;
-  prepTime: number;
-  cookTime: number;
+  // cost: number;
+  // difficulty: string;
+  // prepTime: number;
+  // cookTime: number;
   totalTime: number;
   servings: number;
   calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
+  // protein: number;
+  // carbs: number;
+  // fat: number;
   rating: number;
   recipe_category: string;
   macro_classification: string;
@@ -42,28 +44,26 @@ const ingredients = [
   '1 tsp Italian seasoning',
 ];
 
-const instructions = [
-  'Preheat oven to 400F (200C)',
-  'Season chicken breasts with salt, pepper, and garlic powder',
-  'Arrange chicken and vegetables on a baking sheet',
-  'Drizzle with olive oil and sprinkle Italian seasoning',
-  'Bake for 25 minutes until chicken is cooked through',
-  'Let rest for 5 minutes before serving',
-];
+// const instructions = [
+//   'Preheat oven to 400F (200C)',
+//   'Season chicken breasts with salt, pepper, and garlic powder',
+//   'Arrange chicken and vegetables on a baking sheet',
+//   'Drizzle with olive oil and sprinkle Italian seasoning',
+//   'Bake for 25 minutes until chicken is cooked through',
+//   'Let rest for 5 minutes before serving',
+// ];
 
 const toDetailMeal = (meal: HomeMeal): MealDetailMeal => {
-  const prepTime = 10;
-  const cookTime = Math.max(meal.totalTime - prepTime, 10);
+  // const prepTime = 10;
+  // const cookTime = Math.max(meal.totalTime - prepTime, 10);
 
   return {
     ...meal,
-    prepTime,
-    cookTime,
-    servings: 2,
-    carbs: 28,
-    fat: 18,
+    // prepTime,
+    // cookTime,
+    // carbs: 28,
+    // fat: 18,
     ingredients,
-    instructions,
   };
 };
 
@@ -80,6 +80,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <RecommendationsProvider>
       {selectedMeal ? (
         <MealDetailPage
           meal={selectedMeal}
@@ -106,6 +107,7 @@ export default function App() {
           preferenceSummary={preferenceSummary}
         />
       )}
+    </RecommendationsProvider>
     </SafeAreaProvider>
   );
 }

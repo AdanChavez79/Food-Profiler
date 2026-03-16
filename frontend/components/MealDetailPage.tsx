@@ -24,16 +24,16 @@ type Meal = {
   id: string;
   name: string;
   image: string;
-  cost: number;
-  difficulty: string;
-  prepTime: number;
-  cookTime: number;
+  // cost: number;
+  // difficulty: string;
+  // prepTime: number;
+  // cookTime: number;
   totalTime: number;
   servings: number;
   calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
+  // protein: number;
+  // carbs: number;
+  // fat: number;
   rating: number;
   recipe_category: string;
   macro_classification: string;
@@ -53,16 +53,16 @@ const sampleMeal: Meal = {
   name: "One-Pan Chicken & Vegetables",
   image:
     "https://images.unsplash.com/photo-1662611284583-f34180194370?auto=format&fit=crop&w=1400&q=80",
-  cost: 8.5,
-  difficulty: "Easy",
-  prepTime: 10,
-  cookTime: 25,
+  // cost: 8.5,
+  // difficulty: "Easy",
+  // prepTime: 10,
+  // cookTime: 25,
   totalTime: 35,
   servings: 2,
   calories: 420,
-  protein: 35,
-  carbs: 28,
-  fat: 18,
+  // protein: 35,
+  // carbs: 28,
+  // fat: 18,
   ingredients: [
     "2 chicken breasts",
     "1 cup broccoli florets",
@@ -83,7 +83,7 @@ const sampleMeal: Meal = {
 
 const MealDetailPage = ({ meal = sampleMeal, onClose, onMakeMeal }: MealDetailProps) => {
   const insets = useSafeAreaInsets();
-  const [ingredients, setIngredients] = useState<string[]>(meal.ingredients);
+  const [ingredients, setIngredients] = useState<string[]>();
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
@@ -205,7 +205,7 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onMakeMeal }: MealDetailPr
           <View className="mb-6">
             <Text className="mb-3 text-xl font-semibold text-gray-900">Ingredients</Text>
             <View className="gap-2">
-              {ingredients.map((ingredient) => (
+              {ingredients?.map((ingredient) => (
                 <View key={ingredient} className="flex-row items-start gap-3">
                   <View className="mt-2 h-2 w-2 rounded-full bg-emerald-500" />
                   <Text className="flex-1 text-gray-700">{ingredient}</Text>

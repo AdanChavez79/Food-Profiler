@@ -18,6 +18,7 @@ import {
   Star,
 } from "lucide-react-native";
 import { steps } from "react-native-reanimated";
+import { useRecommendations } from '../RecommendationsContext';
 
 export type HomeMeal = {
   id: string;
@@ -36,9 +37,9 @@ export type HomeMeal = {
 
 
 
-  cost: number;
-  difficulty: string;
-  protein: number;
+  // cost: number;
+  // difficulty: string;
+  // protein: number;
 };
 
 type HomePageProps = {
@@ -53,12 +54,12 @@ const featuredMeal: HomeMeal = {
   name: "One-Pan Chicken & Vegetables",
   image:
     "https://images.unsplash.com/photo-1662611284583-f34180194370?auto=format&fit=crop&w=1400&q=80",
-  cost: 8.5,
-  difficulty: "Easy",
+  // cost: 8.5,
+  // difficulty: "Easy",
   rating: 5,
   totalTime: 35,
   calories: 420,
-  protein: 35,
+  // protein: 35,
 	calories_classification: "string",
 	macro_classification: "string",
   servings: 10,
@@ -81,17 +82,6 @@ const featuredMeal: HomeMeal = {
 //   "Roasted Veggie Quinoa Mix",
 //   "Spicy Tuna Poke Bowl",
 // ];
-function parseInstructions(str: string): string[] {
-  const matches = str.match(/'([^']*)'|"([^"]*)"/g) || [];
-
-  return matches.map((s: string) =>
-    s
-      .slice(1, -1)             
-      .replace(/\n/g, " ")      
-      .replace(/,([^\s])/g, ", $1") 
-      .trim()                    
-  );
-}
 
 const HomePage = ({
   onOpenMeal,
@@ -101,48 +91,11 @@ const HomePage = ({
 }: HomePageProps) => {
   const [expanded, setExpanded] = useState(false);
   const insets = useSafeAreaInsets();
+  const { recommendations, refresh } = useRecommendations();
 
-  const [recommendations, setRecommendations] = useState<HomeMeal[]>([]);
+  //const [recommendations, setRecommendations] = useState<HomeMeal[]>([]);
 
-  useEffect(() => {
-    const fetchMeals = async () => {
-      try {
-        const response = await fetch(
-          "http://127.0.0.1:8000/recommendations?user_id=3"
-        );
-
-        const data = await response.json();
-
-        const formattedMeals = data.recommended_meals.map((meal: any) => ({
-          id: String(meal.id),
-          name: meal.name,
-          image: JSON.parse(meal.images.replace(/'/g, '"'))[0],
-          rating: meal.aggregated_rating,
-          totalTime: meal.totaltime_min,
-          calories: meal.calories,
-          calories_classification: meal.calories_classification,
-	        macro_classification: meal.macro_classification,
-          servings: meal.servings,
-          instructions: parseInstructions(meal.recipe_instructions),
-          recipe_category: meal.recipe_category,
-
-          
-
-          cost: 8.5, 
-          difficulty: "Easy", 
-          protein: 25
-        }));
-
-        setRecommendations(formattedMeals);
-        console.log(formattedMeals);
-
-      } catch (err) {
-        console.error(err);
-      } 
-    };
-
-    fetchMeals();
-  }, []);
+  
   // const recommendations = useMemo<HomeMeal[]>(
   //   () =>
   //     Array.from({ length: 10 }, (_, i) => {
