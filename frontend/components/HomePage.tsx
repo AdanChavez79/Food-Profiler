@@ -46,6 +46,7 @@ type HomePageProps = {
   onOpenMeal?: (meal: HomeMeal) => void;
   onOpenPreferences?: () => void;
   onOpenSearch?: () => void;
+  onOpenHistory?: () => void;
   preferenceSummary?: string;
 };
 
@@ -87,6 +88,7 @@ const HomePage = ({
   onOpenMeal,
   onOpenPreferences,
   onOpenSearch,
+  onOpenHistory,
   preferenceSummary,
 }: HomePageProps) => {
   const [expanded, setExpanded] = useState(false);
@@ -295,6 +297,7 @@ const HomePage = ({
 
           <Pressable
             hitSlop={8}
+            onPress={onOpenHistory}
             style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
             className="items-center"
           >

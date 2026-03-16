@@ -53,8 +53,11 @@ type Filters = {
 
 type SearchPageProps = {
   onBack: () => void;
+  onOpenHistory?: () => void;
   onOpenMeal: (meal: HomeMeal) => void;
 };
+
+type SearchListItem = SearchMeal | string;
 
 const sortLabels: Record<SortMode, string> = {
   Relevance: "Relevance",
@@ -284,7 +287,7 @@ const meals: SearchMeal[] = [
 const matchesBucket = <T,>(selected: T[], values: T[]) =>
   selected.length === 0 || selected.some((candidate) => values.includes(candidate));
 
-const SearchPage = ({ onBack, onOpenMeal }: SearchPageProps) => {
+const SearchPage = ({ onBack, onOpenHistory, onOpenMeal }: SearchPageProps) => {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const numColumns = width >= 920 ? 3 : width >= 560 ? 2 : 1;
@@ -412,7 +415,7 @@ const SearchPage = ({ onBack, onOpenMeal }: SearchPageProps) => {
     totalTime: meal.timeEstimate,
     calories: meal.calories,
     protein: meal.protein,
-  });
+  } as unknown as HomeMeal);
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-slate-50">
@@ -435,7 +438,7 @@ const SearchPage = ({ onBack, onOpenMeal }: SearchPageProps) => {
         </View>
       </View>
 
-      <FlatList
+      <FlatList<SearchListItem>
         data={loading ? Array.from({ length: Math.max(numColumns * 2, 4) }, (_, i) => String(i)) : displayedMeals}
         keyExtractor={(item, index) => (typeof item === "string" ? `skeleton-${item}` : `${item.id}-${index}`)}
         numColumns={numColumns}
@@ -636,10 +639,10 @@ const SearchPage = ({ onBack, onOpenMeal }: SearchPageProps) => {
             <Search size={24} color="#059669" />
             <Text className="mt-1 text-xs font-medium text-emerald-600">Search</Text>
           </View>
-          <View className="items-center">
+          <Pressable onPress={onOpenHistory} className="items-center">
             <History size={24} color="#475569" />
             <Text className="mt-1 text-xs text-slate-600">History</Text>
-          </View>
+          </Pressable>
         </View>
       </View>
     </SafeAreaView>

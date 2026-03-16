@@ -17,6 +17,7 @@ import {
   Users,
   Flame,
   Star,
+  Heart,
 
 } from "lucide-react-native";
 
@@ -45,7 +46,8 @@ type Meal = {
 type MealDetailProps = {
   meal?: Meal;
   onClose: () => void;
-  onMakeMeal: () => void;
+  onToggleFavorite: () => void;
+  isFavorite?: boolean;
 };
 
 const sampleMeal: Meal = {
@@ -81,7 +83,7 @@ const sampleMeal: Meal = {
   recipe_category: "string",
 };
 
-const MealDetailPage = ({ meal = sampleMeal, onClose, onMakeMeal }: MealDetailProps) => {
+const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavorite = false }: MealDetailProps) => {
   const insets = useSafeAreaInsets();
   const [ingredients, setIngredients] = useState<string[]>();
   useEffect(() => {
@@ -235,11 +237,19 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onMakeMeal }: MealDetailPr
         className="absolute bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-6 pt-4"
       >
         <Pressable
-          onPress={onMakeMeal}
-          style={({ pressed }) => [{ backgroundColor: pressed ? "#059669" : "#10B981" }]}
-          className="w-full items-center rounded-xl py-4"
+          onPress={onToggleFavorite}
+          style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
+          className="w-full flex-row items-center justify-center rounded-xl border border-emerald-700 bg-emerald-600 py-4"
         >
-          <Text className="text-base font-semibold text-white">I&apos;ll Make This Meal</Text>
+          <Heart
+            size={18}
+            color="#FFFFFF"
+            fill={isFavorite ? "#FFFFFF" : "transparent"}
+            style={{ marginRight: 8 }}
+          />
+          <Text className="text-base font-semibold text-white">
+            {isFavorite ? 'Remove From Favorites' : 'Add To Favorites'}
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>

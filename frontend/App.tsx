@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import HomePage, { HomeMeal } from 'components/HomePage';
+import HistoryPage from 'components/HistoryPage';
 import MealDetailPage from 'components/MealDetailPage';
 import PreferencesPage, { UserPreferences } from 'components/PreferencesPage';
 import SearchPage from 'components/SearchPage';
@@ -69,7 +70,8 @@ const toDetailMeal = (meal: HomeMeal): MealDetailMeal => {
 
 export default function App() {
   const [selectedMeal, setSelectedMeal] = useState<MealDetailMeal | null>(null);
-  const [screen, setScreen] = useState<'home' | 'preferences' | 'search'>('home');
+  const [screen, setScreen] = useState<'home' | 'preferences' | 'search' | 'history'>('home');
+  const [favoriteMeals, setFavoriteMeals] = useState<MealDetailMeal[]>([]);
   const [preferences, setPreferences] = useState<UserPreferences>({
     likes: [],
     dislikes: [],
@@ -77,6 +79,22 @@ export default function App() {
   });
 
   const preferenceSummary = `${preferences.likes.length} likes | ${preferences.dislikes.length} dislikes | ${preferences.allergies.length} allergies`;
+  const selectedMealIsFavorite = selectedMeal
+    ? favoriteMeals.some((meal) => meal.id === selectedMeal.id)
+    : false;
+
+  const toggleFavoriteMeal = (meal: MealDetailMeal) => {
+    const exists = favoriteMeals.some((favoriteMeal) => favoriteMeal.id === meal.id);
+
+    if (exists) {
+      setFavoriteMeals((current) => current.filter((favoriteMeal) => favoriteMeal.id !== meal.id));
+      Alert.alert('Removed', `${meal.name} removed from favorites.`);
+      return;
+    }
+
+    setFavoriteMeals((current) => [meal, ...current]);
+    Alert.alert('Saved', `${meal.name} added to favorites.`);
+  };
 
   return (
     <SafeAreaProvider>
@@ -85,7 +103,8 @@ export default function App() {
         <MealDetailPage
           meal={selectedMeal}
           onClose={() => setSelectedMeal(null)}
-          onMakeMeal={() => Alert.alert('Saved', `${selectedMeal.name} added to your plan.`)}
+          isFavorite={selectedMealIsFavorite}
+          onToggleFavorite={() => toggleFavoriteMeal(selectedMeal)}
         />
       ) : screen === 'preferences' ? (
         <PreferencesPage
@@ -98,12 +117,24 @@ export default function App() {
           }}
         />
       ) : screen === 'search' ? (
-        <SearchPage onBack={() => setScreen('home')} onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))} />
+        <SearchPage
+          onBack={() => setScreen('home')}
+          onOpenHistory={() => setScreen('history')}
+          onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
+        />
+      ) : screen === 'history' ? (
+        <HistoryPage
+          meals={favoriteMeals}
+          onBack={() => setScreen('home')}
+          onOpenSearch={() => setScreen('search')}
+          onOpenMeal={(meal) => setSelectedMeal(meal)}
+        />
       ) : (
         <HomePage
           onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
           onOpenPreferences={() => setScreen('preferences')}
           onOpenSearch={() => setScreen('search')}
+          onOpenHistory={() => setScreen('history')}
           preferenceSummary={preferenceSummary}
         />
       )}
