@@ -124,10 +124,10 @@ export default function App() {
         />
       ) : screen === 'history' ? (
         <HistoryPage
-          meals={favoriteMeals}
+          //meals={favoriteMeals}
           onBack={() => setScreen('home')}
           onOpenSearch={() => setScreen('search')}
-          onOpenMeal={(meal) => setSelectedMeal(meal)}
+          onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
         />
       ) : (
         <HomePage

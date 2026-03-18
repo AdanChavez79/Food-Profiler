@@ -312,7 +312,25 @@ async def add_meal_history(user_id: int, meal_id: int):
             return {"message": "Meal history insert success"}
     except Exception as e:
         return {"error": str(e)}
-    
+
+@app.get("/user_history_meals")
+async def get_user_history_meals(user_id: int):
+    try:
+        async with app.state.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT *
+                FROM user_meal_history umh
+                JOIN meals m ON umh.meal_id = m.id
+                WHERE umh.user_id = $1
+                ORDER BY umh.time_chosen DESC;
+                """,
+                user_id
+            )
+            return rows
+    except Exception as e:
+        return {"error": str(e)}
+
 #meals eaten last week
 #ingredients eaten last week
 #total number of meals eaten last weke

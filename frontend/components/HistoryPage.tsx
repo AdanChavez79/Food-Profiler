@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Clock, History, Home, Search, Star } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
 
 type HistoryMeal = {
   id: string;
@@ -14,19 +15,80 @@ type HistoryMeal = {
   recipe_category: string;
   macro_classification: string;
   calories_classification: string;
-  ingredients: string[];
   instructions: string[];
+  time_chosen: string;
+  
 };
 
 type HistoryPageProps = {
-  meals: HistoryMeal[];
+  //meals: HistoryMeal[];
   onBack: () => void;
   onOpenSearch: () => void;
   onOpenMeal: (meal: HistoryMeal) => void;
 };
 
-const HistoryPage = ({ meals, onBack, onOpenSearch, onOpenMeal }: HistoryPageProps) => {
+function formatDate(time_chosen: string): string {
+  const date = new Date(time_chosen);
+
+  return date.toLocaleString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: true, 
+  });
+}
+
+function parseInstructions(str: string): string[] {
+  const matches = str.match(/'([^']*)'|"([^"]*)"/g) || [];
+
+  return matches.map((s: string) =>
+    s
+      .slice(1, -1)             
+      .replace(/\n/g, " ")      
+      .replace(/,([^\s])/g, ", $1") 
+      .trim()                    
+  );
+}
+
+const HistoryPage = ({ onBack, onOpenSearch, onOpenMeal }: HistoryPageProps) => {
   const insets = useSafeAreaInsets();
+  const [historyMeals, setHistoryMeals] = useState<HistoryMeal[]>([]);
+
+  useEffect(() => {
+    const fetchHistoryMeals = async () => {
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/user_history_meals?user_id=3`
+        );
+        const data = await response.json();
+
+        const formattedMeals: HistoryMeal[] = data.map((meal: any) => ({
+          id: String(meal.id),
+          name: meal.name,
+          image: JSON.parse(meal.images.replace(/'/g, '"'))[0],
+          rating: meal.aggregated_rating,
+          totalTime: meal.totaltime_min,
+          calories: meal.calories,
+          calories_classification: meal.calories_classification,
+          macro_classification: meal.macro_classification,
+          servings: meal.recipe_servings,
+          instructions: parseInstructions(meal.recipe_instructions),
+          recipe_category: meal.recipe_category,
+          time_chosen: meal.time_chosen,
+        }));
+
+        setHistoryMeals(formattedMeals);
+        console.log(formattedMeals);
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchHistoryMeals();
+  }, []);
 
   return (
     <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-slate-50">
@@ -41,7 +103,7 @@ const HistoryPage = ({ meals, onBack, onOpenSearch, onOpenMeal }: HistoryPagePro
               <Text className="text-xs text-slate-500">Your favorited meals</Text>
             </View>
           </View>
-          <Text className="text-xs font-semibold text-emerald-700">{meals.length} saved</Text>
+          <Text className="text-xs font-semibold text-emerald-700">{historyMeals.length} saved</Text>
         </View>
       </View>
 
@@ -54,7 +116,7 @@ const HistoryPage = ({ meals, onBack, onOpenSearch, onOpenMeal }: HistoryPagePro
         }}
         showsVerticalScrollIndicator={false}
       >
-        {meals.length === 0 ? (
+        {historyMeals.length === 0 ? (
           <View className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10">
             <Text className="text-center text-lg font-semibold text-slate-900">No favorites yet</Text>
             <Text className="mt-2 text-center text-sm text-slate-500">
@@ -63,7 +125,7 @@ const HistoryPage = ({ meals, onBack, onOpenSearch, onOpenMeal }: HistoryPagePro
           </View>
         ) : (
           <View className="gap-4">
-            {meals.map((meal) => (
+            {historyMeals.map((meal) => (
               <Pressable
                 key={meal.id}
                 onPress={() => onOpenMeal(meal)}
@@ -85,8 +147,11 @@ const HistoryPage = ({ meals, onBack, onOpenSearch, onOpenMeal }: HistoryPagePro
                     <View className="rounded-full bg-emerald-50 px-3 py-1">
                       <Text className="text-xs text-emerald-700">{meal.calories} cal</Text>
                     </View>
+                    {/* <View className="rounded-full bg-emerald-50 px-3 py-1">
+                      <Text className="text-xs text-emerald-700">{} </Text>
+                    </View> */}
                   </View>
-                  <Text className="mt-3 text-sm text-slate-600">{meal.recipe_category}</Text>
+                  <Text className="mt-3 text-sm text-slate-600">{formatDate(meal.time_chosen)}</Text>
                 </View>
               </Pressable>
             ))}
