@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { Pressable, ScrollView, Text, TextInput, View, Switch } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
+import { useRecommendations } from 'RecommendationsContext';
 
 export type UserPreferences = {
   likes: string[];
@@ -34,6 +35,7 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
   });
   const [ingredientMap, setIngredientMap] = useState<Record<string, number>>({});
   const [filteredIngredients, setFilteredIngredients] = useState<string[]>([]);
+  const { dayParting, setDayParting } = useRecommendations();
 
   const handleInputChange = (key: PreferenceKey, value: string) => {
     setInputs((prev) => ({ ...prev, [key]: value }));
@@ -96,10 +98,10 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
         );
 
         const data = await response.json();
-        console.log("Added allergy:", data);
+        console.log("Added allergy/ingredient:", data);
 
       } catch (err) {
-        console.error("Error adding allergy:", err);
+        console.error("Error adding to table:", err);
         return;
       }
     }
@@ -134,9 +136,9 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
         );
 
         const data = await response.json();
-        console.log("Deleted allergy:", data);
+        console.log("Deleted allergy/ingredient:", data);
       } catch (err) {
-        console.error("Error deleting from allerg table:", err);
+        console.error("Error deleting from table:", err);
         return;
       }
     }
@@ -244,6 +246,13 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
         style={{ paddingBottom: Math.max(insets.bottom, 12) }}
         className="absolute bottom-0 left-0 right-0 border-t border-slate-200 bg-white px-4 pt-3"
       >
+        <View className="mb-3 flex-row items-center justify-between px-2">
+          <Text className="text-base text-slate-900">Use Day Parting</Text>
+          <Switch
+            value={dayParting}
+            onValueChange={(value) => setDayParting(value)}
+          />
+        </View>
         <Pressable
           onPress={() => onSave(draft)}
           style={({ pressed }) => [{ backgroundColor: pressed ? "#059669" : "#10B981" }]}
@@ -252,6 +261,7 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
           <Text className="text-base font-semibold text-white">Save Preferences</Text>
         </Pressable>
       </View>
+
     </SafeAreaView>
   );
 };
