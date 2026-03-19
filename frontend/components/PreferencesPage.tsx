@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
@@ -15,15 +15,16 @@ type PreferencesPageProps = {
   preferences: UserPreferences;
   onClose: () => void;
   onSave: (preferences: UserPreferences) => void;
+  setPreferences: React.Dispatch<React.SetStateAction<UserPreferences>>; 
 };
 
 const sectionMeta: Array<{ key: PreferenceKey; title: string; placeholder: string }> = [
-  { key: "likes", title: "Likes", placeholder: "Add foods you enjoy" },
-  { key: "dislikes", title: "Dislikes", placeholder: "Add foods to avoid" },
-  { key: "allergies", title: "Allergies", placeholder: "Add allergens (nuts, dairy...)" },
+  // { key: "likes", title: "Likes", placeholder: "Add foods you enjoy" },
+  // { key: "dislikes", title: "Dislikes", placeholder: "Add foods to avoid" },
+  { key: "allergies", title: "Unwanted Ingredients & Allergies", placeholder: "Add unwanted ingredients or allergens (nuts, dairy...)" },
 ];
 
-const PreferencesPage = ({ preferences, onClose, onSave }: PreferencesPageProps) => {
+const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: PreferencesPageProps) => {
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState<UserPreferences>(preferences);
   const [inputs, setInputs] = useState<Record<PreferenceKey, string>>({
@@ -31,20 +32,119 @@ const PreferencesPage = ({ preferences, onClose, onSave }: PreferencesPageProps)
     dislikes: "",
     allergies: "",
   });
+  const [ingredientMap, setIngredientMap] = useState<Record<string, number>>({});
 
-  const addItem = (key: PreferenceKey) => {
+  // const fetchUserAllergies = async () => {
+  //   try {
+  //     const response = await fetch(
+  //       `http://127.0.0.1:8000/user_allergies?user_id=3`
+  //     );
+  //     const data = await response.json();
+  //     console.log("User allergies:", data);
+
+  //     const allergies = data.map((item: any) => item.name);
+
+  //     setDraft((prev) => ({ ...prev, allergies }));
+  //   } catch (err) {
+  //     console.error("Error fetching allergies:", err);
+  //   }
+  // };
+
+  const fetchIngredients = async () => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/all_ingredients`
+      );
+      const data = await response.json();
+
+      const map: Record<string, number> = {};
+      data.forEach((item: any) => {
+        map[item.name.toLowerCase()] = item.id;
+      });
+
+      setIngredientMap(map);
+      console.log("Ingredients:", data);
+    } catch (err) {
+      console.error("Failed to get ingredients", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchIngredients();
+    // fetchUserAllergies();
+  }, []);
+
+  const addItem = async (key: PreferenceKey) => {
     const raw = inputs[key].trim();
     if (!raw) return;
 
+    if (key === "allergies") {
+      const id = ingredientMap[raw.toLowerCase()];
+      if (!id) {
+        alert("Ingredient not found");
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/add_user_allergy?user_id=3&allergy=${id}`,
+          {
+            method: "POST",
+          }
+        );
+
+        const data = await response.json();
+        console.log("Added allergy:", data);
+        
+      } catch (err) {
+        console.error("Error adding allergy:", err);
+        return;
+      }
+    }
+
+    setPreferences(prev => ({
+      ...prev,
+      allergies: [...prev.allergies, raw],
+    }));
+
     setDraft((prev) => {
-      const exists = prev[key].some((item) => item.toLowerCase() === raw.toLowerCase());
+      const exists = prev[key].some(
+        (item) => item.toLowerCase() === raw.toLowerCase()
+      );
       if (exists) return prev;
       return { ...prev, [key]: [...prev[key], raw] };
     });
+
     setInputs((prev) => ({ ...prev, [key]: "" }));
   };
 
-  const removeItem = (key: PreferenceKey, value: string) => {
+  const removeItem = async (key: PreferenceKey, value: string) => {
+    if (key === "allergies") {
+      const id = ingredientMap[value.toLowerCase()];
+      if (!id) return;
+
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/delete_user_allergy?user_id=3&allergy=${id}`,
+          {
+            method: "DELETE",
+          }
+        );
+
+        const data = await response.json();
+        console.log("Deleted allergy:", data);
+      } catch (err) {
+        console.error("Error deleting from allerg table:", err);
+        return;
+      }
+    }
+
+    setPreferences(prev => ({
+      ...prev,
+      allergies: prev.allergies.filter(a => a !== value),
+    }));
+
+
     setDraft((prev) => ({ ...prev, [key]: prev[key].filter((item) => item !== value) }));
   };
 
@@ -54,7 +154,7 @@ const PreferencesPage = ({ preferences, onClose, onSave }: PreferencesPageProps)
         <View className="flex-row items-center justify-between">
           <View>
             <Text className="text-xl font-bold text-slate-900">Food Preferences</Text>
-            <Text className="text-xs text-slate-500">Track likes, dislikes, and allergies</Text>
+            <Text className="text-xs text-slate-500">Track dislikes, and allergies</Text>
           </View>
           <Pressable
             hitSlop={8}

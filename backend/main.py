@@ -163,7 +163,25 @@ async def add_user_allergy(user_id: int, allergy: int):
             return {"message": "Allergy insert success"}
     except Exception as e:
         return {"error": str(e)}
-    
+
+@app.delete("/delete_user_allergy")
+async def delete_user_allergy(user_id: int, allergy: int):
+    try:
+        async with app.state.pool.acquire() as conn:
+            result = await conn.execute(
+                """
+                DELETE FROM user_allergies
+                WHERE user_id = $1 AND ingredient_id = $2
+                """,
+                user_id,
+                allergy
+            )
+
+            return {"message": "Allergy deleted successfully"}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.get("/user_preferences_ingredients")
 async def get_user_preferences_ingredients(user_id: int):
     try:

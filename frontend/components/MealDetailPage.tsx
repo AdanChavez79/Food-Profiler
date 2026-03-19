@@ -135,8 +135,9 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavori
       setLoading(true);
 
       await addMealToHistory();
+      await refreshHistory();
+
       refresh();
-      refreshHistory();
       onClose();
 
     } catch (err) {

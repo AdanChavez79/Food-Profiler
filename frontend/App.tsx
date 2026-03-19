@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect} from 'react';
 import { Alert } from 'react-native';
 import HomePage, { HomeMeal } from 'components/HomePage';
 import HistoryPage from 'components/HistoryPage';
@@ -79,7 +79,30 @@ export default function App() {
     allergies: [],
   });
 
-  const preferenceSummary = `${preferences.likes.length} likes | ${preferences.dislikes.length} dislikes | ${preferences.allergies.length} allergies`;
+  const fetchUserAllergies = async () => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/user_allergies?user_id=3`
+      );
+      const data = await response.json();
+      console.log("User allergies:", data);
+
+      const allergies = data.map((item: any) => item.name); 
+      setPreferences((prev) => ({ ...prev, allergies }));
+    } catch (err) {
+      console.error("Error fetching allergies:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUserAllergies();
+  }, []);
+
+
+
+  // const preferenceSummary = `${preferences.likes.length} likes | ${preferences.dislikes.length} dislikes | ${preferences.allergies.length} allergies`;
+  const preferenceSummary = `${preferences.allergies.length} Unwanted ingredients & Allergens`;
+
   const selectedMealIsFavorite = selectedMeal
     ? favoriteMeals.some((meal) => meal.id === selectedMeal.id)
     : false;
@@ -111,6 +134,7 @@ export default function App() {
           ) : screen === 'preferences' ? (
             <PreferencesPage
               preferences={preferences}
+              setPreferences={setPreferences} 
               onClose={() => setScreen('home')}
               onSave={(next) => {
                 setPreferences(next);

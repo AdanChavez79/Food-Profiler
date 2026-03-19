@@ -95,25 +95,6 @@ const HomePage = ({
 
   const firstMeal = recommendations?.[0];
 
-  // const recommendations = useMemo<HomeMeal[]>(
-  //   () =>
-  //     Array.from({ length: 10 }, (_, i) => {
-  //       if (i === 0) return featuredMeal;
-  //       return {
-  //         ...featuredMeal,
-  //         id: String(i + 1),
-  //         name: mealNames[i - 1] ?? `Meal Recommendation ${i + 1}`,
-  //         totalTime: 25 + i * 3,
-  //         cost: Number((7.5 + i * 0.65).toFixed(2)),
-  //         calories: 360 + i * 25,
-  //         protein: 24 + i * 2,
-  //         difficulty: i % 3 === 0 ? "Easy" : i % 3 === 1 ? "Medium" : "Hard",
-  //       };
-  //     }),
-  //   []
-  // );
-  // const [firstMeal, setFirstMeal] = useState(recommendations[0]);
-  
 
   const MealStats = ({ meal }: { meal: HomeMeal }) => (
     <View className="mt-2 flex-row items-center gap-4">
