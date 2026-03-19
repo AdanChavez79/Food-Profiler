@@ -56,7 +56,7 @@ const HistoryPage = ({ onBack, onOpenSearch, onOpenMeal }: HistoryPageProps) => 
             </View>
             <View className="ml-3">
               <Text className="text-lg font-bold text-slate-900">History</Text>
-              <Text className="text-xs text-slate-500">Your favorited meals</Text>
+              <Text className="text-xs text-slate-500">Your chosen meals</Text>
             </View>
           </View>
           <Text className="text-xs font-semibold text-emerald-700">{historyMeals.length} saved</Text>

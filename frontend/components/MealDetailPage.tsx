@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRecommendations } from '../RecommendationsContext';
+import { useHistory } from 'HistoryContext';
 
 import {
   ImageBackground,
@@ -88,7 +89,9 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavori
   const insets = useSafeAreaInsets();
   const [ingredients, setIngredients] = useState<string[]>();
   const { recommendations, refresh } = useRecommendations();
-  
+  const { historyMeals, refreshHistory } = useHistory();
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
@@ -107,6 +110,42 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavori
 
     fetchIngredients();
   }, [meal.id]);
+
+  const addMealToHistory = async () => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/add_meal_history_and_update_flavor_profile?user_id=3&meal_id=${meal.id}`,
+        {
+          method: "POST",
+        }
+      );
+
+      const data = await response.json();
+      console.log("Good:", data);
+    } catch (err) {
+      console.error("Error adding meal to history table:", err);
+    }
+  };
+
+  
+  const EatMeal = async () => {
+    if (loading) {return;}
+
+    try {
+      setLoading(true);
+
+      await addMealToHistory();
+      refresh();
+      refreshHistory();
+      onClose();
+
+    } catch (err) {
+      console.error("Failed to eat meal:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-white">
       <ScrollView
@@ -240,10 +279,8 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavori
         className="absolute bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-6 pt-4"
       >
         <Pressable
-          onPress={() => {
-            refresh(); 
-            onClose();  
-          }}          
+          onPress={EatMeal}
+          disabled={loading}          
           style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
           className="w-full flex-row items-center justify-center rounded-xl border border-emerald-700 bg-emerald-600 py-4"
         >
@@ -254,7 +291,7 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavori
             style={{ marginRight: 8 }}
           />
           <Text className="text-base font-semibold text-white">
-            {'Eat meal'}
+            {loading ? "Saving..." : "Eat meal"}
           </Text>
         </Pressable>
       </View>
