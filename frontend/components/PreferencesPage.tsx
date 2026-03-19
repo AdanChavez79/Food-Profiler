@@ -15,7 +15,7 @@ type PreferencesPageProps = {
   preferences: UserPreferences;
   onClose: () => void;
   onSave: (preferences: UserPreferences) => void;
-  setPreferences: React.Dispatch<React.SetStateAction<UserPreferences>>; 
+  setPreferences: React.Dispatch<React.SetStateAction<UserPreferences>>;
 };
 
 const sectionMeta: Array<{ key: PreferenceKey; title: string; placeholder: string }> = [
@@ -33,22 +33,24 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
     allergies: "",
   });
   const [ingredientMap, setIngredientMap] = useState<Record<string, number>>({});
+  const [filteredIngredients, setFilteredIngredients] = useState<string[]>([]);
 
-  // const fetchUserAllergies = async () => {
-  //   try {
-  //     const response = await fetch(
-  //       `http://127.0.0.1:8000/user_allergies?user_id=3`
-  //     );
-  //     const data = await response.json();
-  //     console.log("User allergies:", data);
+  const handleInputChange = (key: PreferenceKey, value: string) => {
+    setInputs((prev) => ({ ...prev, [key]: value }));
 
-  //     const allergies = data.map((item: any) => item.name);
-
-  //     setDraft((prev) => ({ ...prev, allergies }));
-  //   } catch (err) {
-  //     console.error("Error fetching allergies:", err);
-  //   }
-  // };
+    if (key === "allergies" && value.trim().length > 0) {
+      const filtered = Object.keys(ingredientMap)
+        .filter(
+          (ingredient) =>
+            ingredient.includes(value.toLowerCase()) &&
+            !draft.allergies.some((a) => a.toLowerCase() === ingredient)
+        )
+        .slice(0, 7);
+      setFilteredIngredients(filtered);
+    } else {
+      setFilteredIngredients([]);
+    }
+  };
 
   const fetchIngredients = async () => {
     try {
@@ -95,7 +97,7 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
 
         const data = await response.json();
         console.log("Added allergy:", data);
-        
+
       } catch (err) {
         console.error("Error adding allergy:", err);
         return;
@@ -182,7 +184,7 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
             <View className="flex-row items-center gap-2">
               <TextInput
                 value={inputs[section.key]}
-                onChangeText={(value) => setInputs((prev) => ({ ...prev, [section.key]: value }))}
+                onChangeText={(value) => handleInputChange(section.key, value)}
                 onSubmitEditing={() => addItem(section.key)}
                 placeholder={section.placeholder}
                 placeholderTextColor="#94A3B8"
@@ -196,6 +198,22 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
                 <Text className="font-semibold text-white">Add</Text>
               </Pressable>
             </View>
+            {section.key === "allergies" && filteredIngredients.length > 0 && (
+              <View className="mt-1 rounded-lg border border-slate-300 bg-white shadow-md">
+                {filteredIngredients.map((ingredient) => (
+                  <Pressable
+                    key={ingredient}
+                    onPress={() => {
+                      setInputs((prev) => ({ ...prev, allergies: ingredient }));
+                      setFilteredIngredients([]);
+                    }}
+                    className="px-3 py-2"
+                  >
+                    <Text className="text-slate-900">{ingredient}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            )}
 
             <View className="mt-3 flex-row flex-wrap gap-2">
               {draft[section.key].length === 0 ? (
