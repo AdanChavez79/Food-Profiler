@@ -35,7 +35,7 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
   });
   const [ingredientMap, setIngredientMap] = useState<Record<string, number>>({});
   const [filteredIngredients, setFilteredIngredients] = useState<string[]>([]);
-  const { dayParting, setDayParting } = useRecommendations();
+  const { recommendations, refresh, dayParting, setDayParting } = useRecommendations();
 
   const handleInputChange = (key: PreferenceKey, value: string) => {
     setInputs((prev) => ({ ...prev, [key]: value }));
@@ -120,6 +120,8 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
     });
 
     setInputs((prev) => ({ ...prev, [key]: "" }));
+    await refresh();
+    
   };
 
   const removeItem = async (key: PreferenceKey, value: string) => {
@@ -150,6 +152,8 @@ const PreferencesPage = ({ preferences, onClose, onSave, setPreferences }: Prefe
 
 
     setDraft((prev) => ({ ...prev, [key]: prev[key].filter((item) => item !== value) }));
+    await refresh();
+
   };
 
   return (
