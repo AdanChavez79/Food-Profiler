@@ -1,5 +1,7 @@
+from datetime import datetime
 import json
 from time import time
+from zoneinfo import ZoneInfo
 import numpy as np
 import pandas as pd
 from typing import List, Dict, Tuple
@@ -467,7 +469,7 @@ async def recommend_food(profile, database_size, day_part = None):
 
 
 @app.get("/recommendations")
-async def run_and_print_recommendations(user_id: int):
+async def run_and_print_recommendations(user_id: int, day_parting: bool = False):
 
     # call user_preferences_ingredients, this is now in DB 
     #All users will start will no flavor profile, we can suggest premade flavor profiles at
@@ -486,7 +488,24 @@ async def run_and_print_recommendations(user_id: int):
 
     num_meals = await get_num_meals()
 
-    recommended, matches = await recommend_food(ingredient_preferences, num_meals)
+    part_of_day = None
+
+    if day_parting:
+        pacific_time_hour = datetime.now(ZoneInfo('America/Los_Angeles')).time().hour
+        #pacific_time_hour = 3
+        if pacific_time_hour >= 6 and pacific_time_hour < 12:
+            part_of_day = "breakfast"
+        elif pacific_time_hour >= 12 and pacific_time_hour < 18:
+            part_of_day = "lunch"
+        elif pacific_time_hour >= 18 and pacific_time_hour < 24:
+            part_of_day = "dinner"
+        else:
+            part_of_day = None
+
+
+    print("part of day: " + str(part_of_day))
+
+    recommended, matches = await recommend_food(ingredient_preferences, num_meals, part_of_day)
     top_10 = recommended[:10]
     top_10_ids = [i + 1 for i in top_10]  
 
