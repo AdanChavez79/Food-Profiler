@@ -395,6 +395,14 @@ async def recommend_food(profile, database_size, day_part = None):
             ingredient_names
         )
 
+        meals_with_allergies = await conn.fetch(
+            """
+            SELECT user_id, ingredient_id, i.meals
+            FROM user_allergies ua
+            JOIN ingredients i ON ua.ingredient_id = i.id
+            """,
+        )
+
         if day_part is not None:
             day_part_rows = await conn.fetch(
                 """
@@ -405,12 +413,19 @@ async def recommend_food(profile, database_size, day_part = None):
                 day_part
             )
         
-    
+
+    all_meal_ids_wht_allergies = set() #create a set of everything you want to exclude
+    for meal_ids in meals_with_allergies:
+        meal_ids = json.loads(meal_ids["meals"]) #unpack all the meal ids from the sql query
+        all_meal_ids_wht_allergies.update(meal_ids) #add them to set
 
     if day_part is not None:
         day_part_rows = [row["id"] - 1 for row in day_part_rows]
         scores[day_part_rows] = 0
-    
+        
+    scores[meal_ids] = -1 #exclude them, theres probably a better way to do this but this is easy
+        
+            
     for row in meal_weights:
         meal_id = row["meal_id"] - 1
         score = row["score"]
