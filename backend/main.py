@@ -128,6 +128,18 @@ async def get_meal(meal_id: int):
             )
         return meal
 
+@app.get("/meals")    
+async def get_meals(meal_ids: List[int]):
+    async with app.state.pool.acquire() as conn:
+        meals = await conn.fetch(
+            """
+            SELECT *
+            FROM meals m
+            WHERE m.id = ANY($1);
+            """,
+            meal_ids
+        )
+        return meals
 
 #Might not need if we are retrieving all meal data for frontend
 @app.get("/meal_ingredients")    
@@ -481,7 +493,14 @@ async def recommend_food(profile, database_size, day_part = None):
                 scores[index] += weight_lookup.get(ingredient_name, 0)
                 matched_ingredients[index].append(ingredient_name)
 
+
+
     sorted_indices = np.argsort(scores)[::-1]
+
+
+
+    sorted_indices = sorted_indices[:scores.argmax(0)]
+    
 
     end_time = time()
 
