@@ -67,8 +67,6 @@ const featuredMeal: HomeMeal = {
   recipe_category: "string",
   instructions: ["Example"],
 
-
-
 };
 
 // const mealNames = [
@@ -95,9 +93,8 @@ const HomePage = ({
   const insets = useSafeAreaInsets();
   const { recommendations, refresh } = useRecommendations();
 
-  //const [recommendations, setRecommendations] = useState<HomeMeal[]>([]);
+  const firstMeal = recommendations?.[0];
 
-  
   // const recommendations = useMemo<HomeMeal[]>(
   //   () =>
   //     Array.from({ length: 10 }, (_, i) => {
@@ -115,6 +112,7 @@ const HomePage = ({
   //     }),
   //   []
   // );
+  // const [firstMeal, setFirstMeal] = useState(recommendations[0]);
   
 
   const MealStats = ({ meal }: { meal: HomeMeal }) => (
@@ -167,7 +165,7 @@ const HomePage = ({
   );
 
   const RecommendationCard = ({ meal }: { meal: HomeMeal }) => {
-    const isFeatured = meal.id === featuredMeal.id;
+    const isFeatured = meal.id === firstMeal?.id;
 
     return (
       <Pressable
@@ -253,7 +251,13 @@ const HomePage = ({
                 <Text className="text-xs text-emerald-800">{preferenceSummary}</Text>
               </View>
             ) : null}
-            <FeaturedCard meal={featuredMeal} />
+            {firstMeal ? (
+              <FeaturedCard meal={firstMeal} />
+            ) : (
+              <View className="h-[400px] items-center justify-center rounded-2xl bg-slate-200">
+                <Text className="text-slate-500">Loading...</Text>
+              </View>
+            )}
           </View>
         ) : (
           <View>
