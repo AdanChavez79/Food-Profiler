@@ -4,11 +4,15 @@ import { HomeMeal } from "./components/HomePage";
 type RecommendationsContextType = {
   recommendations: HomeMeal[];
   refresh: () => Promise<void>;
+  dayParting: boolean; 
+  setDayParting: (value: boolean) => void;
 };
 
 const RecommendationsContext = createContext<RecommendationsContextType>({
   recommendations: [],
   refresh: async () => { },
+  dayParting: true,    
+  setDayParting: () => {}, 
 });
 
 export const useRecommendations = () => useContext(RecommendationsContext);
@@ -27,11 +31,12 @@ function parseInstructions(str: string): string[] {
 
 export const RecommendationsProvider = ({ children }: { children: React.ReactNode }) => {
   const [recommendations, setRecommendations] = useState<HomeMeal[]>([]);
+  const [dayParting, setDayParting] = useState<boolean>(true); 
 
   const fetchRecommendations = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/recommendations?user_id=3"
+        `http://127.0.0.1:8000/recommendations?user_id=3&day_parting=${dayParting}`
       );
       const data = await response.json();
 
@@ -58,12 +63,16 @@ export const RecommendationsProvider = ({ children }: { children: React.ReactNod
 
   useEffect(() => {
     fetchRecommendations();
-  }, []);
+  }, [dayParting]);
 
   return (
     <RecommendationsContext.Provider
-      value={{ recommendations, refresh: fetchRecommendations }}
-    >
+      value={{ 
+        recommendations, 
+        refresh: fetchRecommendations,
+        dayParting,
+        setDayParting
+      }}    >
       {children}
     </RecommendationsContext.Provider>
   );
