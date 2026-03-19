@@ -316,6 +316,29 @@ async def add_meal_history_and_update_flavor_profile(user_id: int, meal_id: int)
         return {"error": str(e)}
 
 
+@app.get("/get_inverse_index")
+async def get_inverse_index():
+    try:
+        async with app.state.pool.acquire() as conn:
+            rows = await conn.fetch(
+                """
+                SELECT name, meals
+                FROM ingredients;
+                """,
+            )
+            
+            correctly_formatted_rows = []
+            for row in rows:
+                meal_ids = json.loads(row["meals"])
+                meal_ids = [x - 1 for x in meal_ids]
+                correctly_formatted_rows.append((row["name"], meal_ids))
+
+            return correctly_formatted_rows
+        
+
+    except Exception as e:
+        return {"inverse_index error": str(e)}
+
 
 @app.post("/add_meal_history")
 async def add_meal_history(user_id: int, meal_id: int):
