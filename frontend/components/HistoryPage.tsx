@@ -3,8 +3,10 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Clock, History, Home, Search, Star } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
+import { useHistory } from 'HistoryContext';
 
-type HistoryMeal = {
+
+export type HistoryMeal = {
   id: string;
   name: string;
   image: string;
@@ -40,56 +42,10 @@ function formatDate(time_chosen: string): string {
   });
 }
 
-function parseInstructions(str: string): string[] {
-  const matches = str.match(/'([^']*)'|"([^"]*)"/g) || [];
-
-  return matches.map((s: string) =>
-    s
-      .slice(1, -1)             
-      .replace(/\n/g, " ")      
-      .replace(/,([^\s])/g, ", $1") 
-      .trim()                    
-  );
-}
-
 const HistoryPage = ({ onBack, onOpenSearch, onOpenMeal }: HistoryPageProps) => {
   const insets = useSafeAreaInsets();
-  const [historyMeals, setHistoryMeals] = useState<HistoryMeal[]>([]);
-
-  useEffect(() => {
-    const fetchHistoryMeals = async () => {
-      try {
-        const response = await fetch(
-          `http://127.0.0.1:8000/user_history_meals?user_id=3`
-        );
-        const data = await response.json();
-
-        const formattedMeals: HistoryMeal[] = data.map((meal: any) => ({
-          id: String(meal.id),
-          name: meal.name,
-          image: JSON.parse(meal.images.replace(/'/g, '"'))[0],
-          rating: meal.aggregated_rating,
-          totalTime: meal.totaltime_min,
-          calories: meal.calories,
-          calories_classification: meal.calories_classification,
-          macro_classification: meal.macro_classification,
-          servings: meal.recipe_servings,
-          instructions: parseInstructions(meal.recipe_instructions),
-          recipe_category: meal.recipe_category,
-          time_chosen: meal.time_chosen,
-        }));
-
-        setHistoryMeals(formattedMeals);
-        console.log(formattedMeals);
-
-      } catch (err) {
-        console.error(err);
-      }
-    };
-
-    fetchHistoryMeals();
-  }, []);
-
+  // const [historyMeals, setHistoryMeals] = useState<HistoryMeal[]>([]);
+  const { historyMeals, refreshHistory } = useHistory();
   return (
     <SafeAreaView edges={["top", "left", "right"]} className="flex-1 bg-slate-50">
       <View className="border-b border-slate-200 bg-white px-4 py-4">

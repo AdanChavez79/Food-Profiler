@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useRecommendations } from '../RecommendationsContext';
 
 import {
   ImageBackground,
@@ -86,6 +87,8 @@ const sampleMeal: Meal = {
 const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavorite = false }: MealDetailProps) => {
   const insets = useSafeAreaInsets();
   const [ingredients, setIngredients] = useState<string[]>();
+  const { recommendations, refresh } = useRecommendations();
+  
   useEffect(() => {
     const fetchIngredients = async () => {
       try {
@@ -237,7 +240,10 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavori
         className="absolute bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-6 pt-4"
       >
         <Pressable
-          onPress={onToggleFavorite}
+          onPress={() => {
+            refresh(); 
+            onClose();  
+          }}          
           style={({ pressed }) => [{ opacity: pressed ? 0.9 : 1 }]}
           className="w-full flex-row items-center justify-center rounded-xl border border-emerald-700 bg-emerald-600 py-4"
         >
@@ -248,7 +254,7 @@ const MealDetailPage = ({ meal = sampleMeal, onClose, onToggleFavorite, isFavori
             style={{ marginRight: 8 }}
           />
           <Text className="text-base font-semibold text-white">
-            {isFavorite ? 'Remove From Favorites' : 'Add To Favorites'}
+            {'Eat meal'}
           </Text>
         </Pressable>
       </View>

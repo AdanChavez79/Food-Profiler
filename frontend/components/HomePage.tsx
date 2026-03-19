@@ -18,7 +18,7 @@ import {
   Star,
 } from "lucide-react-native";
 import { steps } from "react-native-reanimated";
-import { useRecommendations } from '../RecommendationsContext';
+import { useRecommendations } from 'RecommendationsContext';
 
 export type HomeMeal = {
   id: string;

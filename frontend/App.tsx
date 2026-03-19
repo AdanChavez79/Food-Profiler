@@ -9,7 +9,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import './global.css';
 
-import { RecommendationsProvider } from './RecommendationsContext';
+import { RecommendationsProvider } from 'RecommendationsContext';
+import { HistoryProvider } from 'HistoryContext';
 
 type MealDetailMeal = {
   id: string;
@@ -98,47 +99,49 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <RecommendationsProvider>
-      {selectedMeal ? (
-        <MealDetailPage
-          meal={selectedMeal}
-          onClose={() => setSelectedMeal(null)}
-          isFavorite={selectedMealIsFavorite}
-          onToggleFavorite={() => toggleFavoriteMeal(selectedMeal)}
-        />
-      ) : screen === 'preferences' ? (
-        <PreferencesPage
-          preferences={preferences}
-          onClose={() => setScreen('home')}
-          onSave={(next) => {
-            setPreferences(next);
-            setScreen('home');
-            Alert.alert('Saved', 'Your food preferences were updated.');
-          }}
-        />
-      ) : screen === 'search' ? (
-        <SearchPage
-          onBack={() => setScreen('home')}
-          onOpenHistory={() => setScreen('history')}
-          onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
-        />
-      ) : screen === 'history' ? (
-        <HistoryPage
-          //meals={favoriteMeals}
-          onBack={() => setScreen('home')}
-          onOpenSearch={() => setScreen('search')}
-          onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
-        />
-      ) : (
-        <HomePage
-          onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
-          onOpenPreferences={() => setScreen('preferences')}
-          onOpenSearch={() => setScreen('search')}
-          onOpenHistory={() => setScreen('history')}
-          preferenceSummary={preferenceSummary}
-        />
-      )}
-    </RecommendationsProvider>
+      <HistoryProvider>
+        <RecommendationsProvider>
+          {selectedMeal ? (
+            <MealDetailPage
+              meal={selectedMeal}
+              onClose={() => setSelectedMeal(null)}
+              isFavorite={selectedMealIsFavorite}
+              onToggleFavorite={() => toggleFavoriteMeal(selectedMeal)}
+            />
+          ) : screen === 'preferences' ? (
+            <PreferencesPage
+              preferences={preferences}
+              onClose={() => setScreen('home')}
+              onSave={(next) => {
+                setPreferences(next);
+                setScreen('home');
+                Alert.alert('Saved', 'Your food preferences were updated.');
+              }}
+            />
+          ) : screen === 'search' ? (
+            <SearchPage
+              onBack={() => setScreen('home')}
+              onOpenHistory={() => setScreen('history')}
+              onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
+            />
+          ) : screen === 'history' ? (
+            <HistoryPage
+              //meals={favoriteMeals}
+              onBack={() => setScreen('home')}
+              onOpenSearch={() => setScreen('search')}
+              onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
+            />
+          ) : (
+            <HomePage
+              onOpenMeal={(meal) => setSelectedMeal(toDetailMeal(meal))}
+              onOpenPreferences={() => setScreen('preferences')}
+              onOpenSearch={() => setScreen('search')}
+              onOpenHistory={() => setScreen('history')}
+              preferenceSummary={preferenceSummary}
+            />
+          )}
+        </RecommendationsProvider>
+      </HistoryProvider>
     </SafeAreaProvider>
   );
 }
