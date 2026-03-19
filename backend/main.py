@@ -330,7 +330,7 @@ async def get_inverse_index():
             correctly_formatted_rows = []
             for row in rows:
                 meal_ids = json.loads(row["meals"])
-                meal_ids = [x - 1 for x in meal_ids]
+                meal_ids = [x + 1 for x in meal_ids]
                 correctly_formatted_rows.append((row["name"], meal_ids))
 
             return correctly_formatted_rows
