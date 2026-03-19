@@ -340,12 +340,23 @@ async def get_num_meals():
         return await conn.fetchval("SELECT COUNT(*) FROM meals;")
    
 
-async def recommend_food(profile, database_size):
+async def recommend_food(profile, database_size, day_part = None):
     #maybe make this a dictionary, name is key and score/weight is value
     start_time = time()
 
-    scores = np.zeros(database_size, dtype=int)
+    fill_val = 0
+
+    if day_part is not None:
+        fill_val = -1
+ 
+    scores = np.full(database_size, fill_val, dtype=int)
+
     matched_ingredients = [[] for _ in range(database_size)]
+
+    ingredient_names = [name for name, _ in profile]
+    weight_lookup = {name: weight for name, weight in profile}
+
+    day_part_rows = None
 
     async with app.state.pool.acquire() as conn:
         meal_weights = await conn.fetch(
@@ -356,39 +367,74 @@ async def recommend_food(profile, database_size):
             """
         )
 
-    for row in meal_weights:
-        meal_id = row["meal_id"]
-        score = row["score"]
-
-        scores[meal_id - 1] += score
-
-    ingredient_names = [name for name, _ in profile]
-    weight_lookup = {name: weight for name, weight in profile}
-
-    async with app.state.pool.acquire() as conn:
+        #async with app.state.pool.acquire() as conn:
         rows = await conn.fetch(
             """
-            SELECT mi.meal_id, i.name
-            FROM meal_ingredients mi
-            JOIN ingredients i ON i.id = mi.ingredient_id
-            WHERE i.name = ANY($1);
+            SELECT meals, name
+            FROM ingredients
+            WHERE name = ANY($1);
             """,
             ingredient_names
         )
 
-    for meal_id, ingredient_name in rows:
+        if day_part is not None:
+            day_part_rows = await conn.fetch(
+                """
+                SELECT id
+                FROM meals
+                WHERE day_parting = $1;
+                """,
+                day_part
+            )
+        
+    
 
-        index = meal_id - 1
+    if day_part is not None:
+        day_part_rows = [row["id"] - 1 for row in day_part_rows]
+        scores[day_part_rows] = 0
+    
+    for row in meal_weights:
+        meal_id = row["meal_id"] - 1
+        score = row["score"]
 
-        if 0 <= index < database_size:
-            scores[index] += weight_lookup.get(ingredient_name, 0)
-            matched_ingredients[index].append(ingredient_name)
+        if scores[meal_id] != -1:
+            scores[meal_id] += score
+
+    """
+    SELECT mi.meal_id, i.name
+    FROM meal_ingredients mi
+    JOIN ingredients i ON i.id = mi.ingredient_id
+    WHERE i.name = ANY($1);
+    """
+
+    
+
+    for i, (meal_ids, ingredient_name) in enumerate(rows):
+        json_start_time = time()
+        meal_ids = str(meal_ids)
+        meal_ids = meal_ids.replace("',", '",')
+        meal_ids = meal_ids.replace(", '", ', "')
+        meal_ids = meal_ids.replace("']", '"]')
+        meal_ids = meal_ids.replace(r"\['", '["')
+
+        meal_ids = json.loads(meal_ids)
+        
+        if i == 0:
+            print("json conversion time: " + str(time() - json_start_time))
+
+
+        for meal_id in meal_ids:
+            index = int(meal_id)
+
+            if 0 <= index < database_size and scores[index] != -1:
+                scores[index] += weight_lookup.get(ingredient_name, 0)
+                matched_ingredients[index].append(ingredient_name)
 
     sorted_indices = np.argsort(scores)[::-1]
 
     end_time = time()
 
-    print("reccomend time: " + str(end_time - start_time))
+    print("recommend time: " + str(end_time - start_time))
 
     return sorted_indices.tolist(), matched_ingredients
 
@@ -430,7 +476,7 @@ async def run_and_print_recommendations(user_id: int):
     
     end_time = time()
 
-    print("reccomendations time: " + str(end_time - start_time))
+    print("recommendations time: " + str(end_time - start_time))
 
     return {
          "recommended_meals": meals,
@@ -499,13 +545,41 @@ async def populates_meal_ingredients_table_and_ingredients_table():
 
 
 
+@app.post("/add_day_parts")
+async def add_day_parts():
+    async with app.state.pool.acquire() as conn:
+        database_pd = (pd.read_csv('classified_foods_no_misc.csv')).fillna(0)
+        #database_pd.rename(columns={'Unnamed: 0': 'Index'}, inplace=True)
+        #database_pd["Index"] = database_pd.index
+
+        database_pd["labels"] = database_pd["labels"].map(str)
+        database_pd["labels"] = database_pd["labels"].replace("',", '",', regex=True)
+        database_pd["labels"] = database_pd["labels"].replace(", '", ', "', regex=True)
+        database_pd["labels"] = database_pd["labels"].replace("']", '"]', regex=True)
+        database_pd["labels"] = database_pd["labels"].replace(r"\['", '["', regex=True)
+
+        database_pd["labels"] = database_pd["labels"].map(json.loads)
+
+        food_and_day_part = database_pd[["sequence", "labels"]].to_numpy()
+
+        
+
+        for i in range(food_and_day_part.shape[0]):
+            food_and_day_part[i, 1] = list(food_and_day_part[i, 1])[0]
 
 
+        food_and_day_part = food_and_day_part.tolist()
 
+        print(food_and_day_part)
 
-
-
-
+        await conn.executemany(
+            """
+            UPDATE meals
+            SET day_parting = $2
+            WHERE name = $1
+            """,
+            food_and_day_part
+        )
 
 
 # async def delete_all_rows_from_database():
