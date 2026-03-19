@@ -411,14 +411,7 @@ async def recommend_food(profile, database_size, day_part = None):
 
     for i, (meal_ids, ingredient_name) in enumerate(rows):
         json_start_time = time()
-        meal_ids = str(meal_ids)
-        meal_ids = meal_ids.replace("',", '",')
-        meal_ids = meal_ids.replace(", '", ', "')
-        meal_ids = meal_ids.replace("']", '"]')
-        meal_ids = meal_ids.replace(r"\['", '["')
-
         meal_ids = json.loads(meal_ids)
-        
         if i == 0:
             print("json conversion time: " + str(time() - json_start_time))
 
