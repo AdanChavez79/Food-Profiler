@@ -416,11 +416,12 @@ async def recommend_food(profile, database_size, day_part = None):
     async with app.state.pool.acquire() as conn:
         meal_weights = await conn.fetch(
             """
-            SELECT meal_id, score
+            SELECT meal_id, score, meals_since_eaten
             FROM user_preferences_meals
-            WHERE meals_since_eaten > 1;
             """
         )
+
+
 
         #async with app.state.pool.acquire() as conn:
         rows = await conn.fetch(
@@ -461,11 +462,15 @@ async def recommend_food(profile, database_size, day_part = None):
         scores[day_part_rows] = 0
         
     scores[meal_ids] = -1 #exclude them, theres probably a better way to do this but this is easy
-        
-            
+    
+
     for row in meal_weights:
         meal_id = row["meal_id"] - 1
         score = row["score"]
+        meals_since_eaten = row["meals_since_eaten"]
+
+        if meals_since_eaten <= 1:
+            scores[meal_id] = -1
 
         if scores[meal_id] != -1:
             scores[meal_id] += score
@@ -497,9 +502,15 @@ async def recommend_food(profile, database_size, day_part = None):
 
     sorted_indices = np.argsort(scores)[::-1]
 
+    index_of_0 = np.argmax(scores[sorted_indices] == 0)
+
+    sorted_indices = sorted_indices[:index_of_0]
 
 
-    sorted_indices = sorted_indices[:scores.argmax(0)]
+    while sorted_indices.size < 10:
+        random_number = np.random.randint(0, database_size)
+        if random_number not in sorted_indices and random_number not in all_meal_ids_wht_allergies:
+            sorted_indices = np.append(sorted_indices, random_number)
     
 
     end_time = time()
@@ -551,13 +562,16 @@ async def run_and_print_recommendations(user_id: int, day_parting: bool = False)
     top_10 = recommended[:10]
     top_10_ids = [i + 1 for i in top_10]  
 
-
+    meals = []
     
     async with app.state.pool.acquire() as conn:
-        meals = await conn.fetch(
-            "SELECT * FROM meals WHERE id = ANY($1::int[])",
-            top_10_ids
-        )
+        for meal_id in top_10_ids:
+            meal = await conn.fetch(
+                "SELECT * FROM meals WHERE id = $1",
+                meal_id
+            )
+            meals.extend(meal)
+
 
     top_10_ingredient_match = [matches[i] for i in top_10]
     
