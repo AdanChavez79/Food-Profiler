@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Query
 
 load_dotenv()
 
@@ -128,8 +129,8 @@ async def get_meal(meal_id: int):
             )
         return meal
 
-@app.get("/meals")    
-async def get_meals(meal_ids: List[int]):
+@app.get("/meals")
+async def get_meals(meal_ids: List[int] = Query(...)):
     async with app.state.pool.acquire() as conn:
         meals = await conn.fetch(
             """
