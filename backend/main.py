@@ -233,7 +233,7 @@ async def get_user_preferences_meals(user_id: int):
         return {"error": str(e)}
 
 
-meals_since_eaten_threshold = 10
+meals_since_eaten_threshold = 21
 
 @app.post("/add_meal_history_and_update_flavor_profile")
 async def add_meal_history_and_update_flavor_profile(user_id: int, meal_id: int):
@@ -462,7 +462,7 @@ async def recommend_food(profile, database_size, day_part = None):
         day_part_rows = [row["id"] - 1 for row in day_part_rows]
         scores[day_part_rows] = 0
         
-    scores[meal_ids] = -1 #exclude them, theres probably a better way to do this but this is easy
+    scores[list(all_meal_ids_wht_allergies)] = -1 #exclude them, theres probably a better way to do this but this is easy
     
 
     for row in meal_weights:
@@ -470,7 +470,7 @@ async def recommend_food(profile, database_size, day_part = None):
         score = row["score"]
         meals_since_eaten = row["meals_since_eaten"]
 
-        if meals_since_eaten <= 1:
+        if meals_since_eaten <= 6:
             scores[meal_id] = -1
 
         if scores[meal_id] != -1:
